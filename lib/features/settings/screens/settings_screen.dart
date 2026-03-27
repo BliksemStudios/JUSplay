@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
@@ -233,18 +234,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: const Text('Source code'),
             subtitle: const Text('GitHub'),
             trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () {
-              // TODO: Open GitHub URL via url_launcher
-            },
+            onTap: () => launchUrl(
+              Uri.parse('https://github.com/BliksemStudios/JUSplay'),
+              mode: LaunchMode.externalApplication,
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.favorite_outline),
             title: const Text('Support the project'),
-            subtitle: const Text('Donate'),
+            subtitle: const Text('Buy me a coffee'),
             trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () {
-              // TODO: Open donate URL via url_launcher
-            },
+            onTap: () => launchUrl(
+              Uri.parse('https://ko-fi.com/bliksemstudios'),
+              mode: LaunchMode.externalApplication,
+            ),
           ),
           const SizedBox(height: 32),
         ],
