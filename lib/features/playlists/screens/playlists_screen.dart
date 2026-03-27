@@ -96,8 +96,6 @@ class _PlaylistsScreenState extends ConsumerState<PlaylistsScreen> {
       },
     );
 
-    nameController.dispose();
-
     if (name == null || name.isEmpty) return;
 
     try {
