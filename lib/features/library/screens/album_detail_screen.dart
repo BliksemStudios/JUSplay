@@ -577,10 +577,71 @@ class _TrackTile extends ConsumerWidget {
                         ),
                       ),
                       const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.add),
+                        title: const Text('New playlist'),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final nameController = TextEditingController();
+                          final name = await showDialog<String>(
+                            context: context,
+                            builder: (dialogCtx) => AlertDialog(
+                              title: const Text('New Playlist'),
+                              content: TextField(
+                                controller: nameController,
+                                autofocus: true,
+                                decoration: const InputDecoration(
+                                  hintText: 'Playlist name',
+                                ),
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                onSubmitted: (v) => Navigator.of(dialogCtx)
+                                    .pop(v.trim()),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogCtx).pop(),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.of(dialogCtx)
+                                      .pop(nameController.text.trim()),
+                                  child: const Text('Create'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (name == null || name.isEmpty) return;
+                          try {
+                            await api.createPlaylist(
+                              name: name,
+                              songIds: [targetSong.id],
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('Added to "$name"'),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed: $e'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      const Divider(height: 1),
                       if (playlists.isEmpty)
                         const Padding(
                           padding: EdgeInsets.all(24),
-                          child: Text('No playlists found'),
+                          child: Text('No playlists yet'),
                         )
                       else
                         ConstrainedBox(
