@@ -9,12 +9,18 @@ import '../features/search/screens/search_screen.dart';
 import '../features/playlists/screens/playlists_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../features/player/screens/now_playing_screen.dart';
+import '../features/player/widgets/mini_player.dart';
 import '../features/library/screens/artist_detail_screen.dart';
 import '../features/library/screens/album_detail_screen.dart';
 import '../features/playlists/screens/playlist_detail_screen.dart';
+import 'providers/providers.dart';
 
-// TODO: Replace with actual auth state provider once implemented
-final isAuthenticatedProvider = StateProvider<bool>((ref) => false);
+/// Derives authentication state from the active server.
+/// When a server is selected (including one loaded from storage on startup),
+/// the user is considered authenticated.
+final isAuthenticatedProvider = Provider<bool>((ref) {
+  return ref.watch(activeServerProvider) != null;
+});
 
 final routerProvider = Provider<GoRouter>((ref) {
   final isAuthenticated = ref.watch(isAuthenticatedProvider);
@@ -169,7 +175,12 @@ class ScaffoldWithNavBar extends StatelessWidget {
     final currentIndex = _currentIndex(context);
 
     return Scaffold(
-      body: child,
+      body: Column(
+        children: [
+          Expanded(child: child),
+          const MiniPlayer(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {

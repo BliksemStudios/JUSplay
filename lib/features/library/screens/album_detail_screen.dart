@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../core/api/api.dart';
+import '../../../core/audio/audio.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/models/models.dart';
 
@@ -229,7 +230,7 @@ class AlbumDetailScreen extends ConsumerWidget {
 // Album content (header + track list)
 // ---------------------------------------------------------------------------
 
-class _AlbumContent extends StatelessWidget {
+class _AlbumContent extends ConsumerWidget {
   const _AlbumContent({required this.detail, required this.api});
 
   final _AlbumDetail detail;
@@ -244,8 +245,31 @@ class _AlbumContent extends StatelessWidget {
     return '$minutes min';
   }
 
+  void _playAll(WidgetRef ref, List<Song> songs) {
+    if (songs.isEmpty || api == null) return;
+    final handler = ref.read(audioHandlerProvider);
+    handler.playQueue(
+      songs,
+      startIndex: 0,
+      getStreamUrl: (id) => api!.streamUrl(id),
+      getCoverArtUrl: (id) => api!.coverArtUrl(id),
+    );
+  }
+
+  void _shuffleAll(WidgetRef ref, List<Song> songs) {
+    if (songs.isEmpty || api == null) return;
+    final shuffled = List<Song>.from(songs)..shuffle();
+    final handler = ref.read(audioHandlerProvider);
+    handler.playQueue(
+      shuffled,
+      startIndex: 0,
+      getStreamUrl: (id) => api!.streamUrl(id),
+      getCoverArtUrl: (id) => api!.coverArtUrl(id),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final album = detail.album;
@@ -355,17 +379,17 @@ class _AlbumContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     FilledButton.icon(
-                      onPressed: () {
-                        // TODO: Play all tracks
-                      },
+                      onPressed: songs.isNotEmpty
+                          ? () => _playAll(ref, songs)
+                          : null,
                       icon: const Icon(Icons.play_arrow),
                       label: const Text('Play All'),
                     ),
                     const SizedBox(width: 12),
                     OutlinedButton.icon(
-                      onPressed: () {
-                        // TODO: Shuffle all tracks
-                      },
+                      onPressed: songs.isNotEmpty
+                          ? () => _shuffleAll(ref, songs)
+                          : null,
                       icon: const Icon(Icons.shuffle),
                       label: const Text('Shuffle'),
                     ),
@@ -407,7 +431,7 @@ class _AlbumContent extends StatelessWidget {
 // Track tile
 // ---------------------------------------------------------------------------
 
-class _TrackTile extends StatelessWidget {
+class _TrackTile extends ConsumerWidget {
   const _TrackTile({
     required this.song,
     required this.index,
@@ -418,8 +442,43 @@ class _TrackTile extends StatelessWidget {
   final int index;
   final List<Song> songs;
 
+  void _playFromIndex(WidgetRef ref) {
+    final api = ref.read(subsonicApiProvider);
+    if (api == null) return;
+    final handler = ref.read(audioHandlerProvider);
+    handler.playQueue(
+      songs,
+      startIndex: index,
+      getStreamUrl: (id) => api.streamUrl(id),
+      getCoverArtUrl: (id) => api.coverArtUrl(id),
+    );
+  }
+
+  void _addToQueue(WidgetRef ref) {
+    final api = ref.read(subsonicApiProvider);
+    if (api == null) return;
+    final handler = ref.read(audioHandlerProvider);
+    handler.addToQueue(
+      song,
+      streamUrl: api.streamUrl(song.id),
+      coverArtUrl: api.coverArtUrl(song.coverArtId),
+    );
+  }
+
+  Future<void> _toggleStar(WidgetRef ref) async {
+    final api = ref.read(subsonicApiProvider);
+    if (api == null) return;
+    try {
+      if (song.starred != null) {
+        await api.unstar(id: song.id);
+      } else {
+        await api.star(id: song.id);
+      }
+    } catch (_) {}
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -467,18 +526,16 @@ class _TrackTile extends StatelessWidget {
               color: colorScheme.onSurfaceVariant,
               size: 20,
             ),
-            onPressed: () => _showTrackMenu(context),
+            onPressed: () => _showTrackMenu(context, ref),
             visualDensity: VisualDensity.compact,
           ),
         ],
       ),
-      onTap: () {
-        // TODO: Play this track and queue the rest of the album
-      },
+      onTap: () => _playFromIndex(ref),
     );
   }
 
-  void _showTrackMenu(BuildContext context) {
+  void _showTrackMenu(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -507,7 +564,10 @@ class _TrackTile extends StatelessWidget {
                 title: const Text('Add to queue'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Add to queue
+                  _addToQueue(ref);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Added to queue')),
+                  );
                 },
               ),
               ListTile(
@@ -516,7 +576,7 @@ class _TrackTile extends StatelessWidget {
                 title: const Text('Add to playlist'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Add to playlist
+                  // TODO: Add to playlist picker
                 },
               ),
               ListTile(
@@ -530,7 +590,7 @@ class _TrackTile extends StatelessWidget {
                     song.starred != null ? 'Remove from favorites' : 'Star'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Star / unstar
+                  _toggleStar(ref);
                 },
               ),
               const SizedBox(height: 8),

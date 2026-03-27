@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/api/api.dart';
-import '../../../core/router.dart';
 
 /// Server login / add screen.
 ///
@@ -123,8 +122,7 @@ class _ServerLoginScreenState extends ConsumerState<ServerLoginScreen> {
       // Save server and set as active.
       final storage = ref.read(serverStorageProvider);
       await storage.saveServer(server);
-      ref.read(activeServerProvider.notifier).setServer(server);
-      ref.read(isAuthenticatedProvider.notifier).state = true;
+      await ref.read(activeServerProvider.notifier).setServer(server);
 
       if (mounted) {
         context.go('/home');
@@ -155,8 +153,7 @@ class _ServerLoginScreenState extends ConsumerState<ServerLoginScreen> {
         return;
       }
 
-      ref.read(activeServerProvider.notifier).setServer(server);
-      ref.read(isAuthenticatedProvider.notifier).state = true;
+      await ref.read(activeServerProvider.notifier).setServer(server);
 
       if (mounted) {
         context.go('/home');

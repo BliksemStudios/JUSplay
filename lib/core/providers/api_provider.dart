@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api.dart';
+import '../cache/cache.dart';
 import '../models/models.dart';
 import '../storage/storage.dart';
 
@@ -78,4 +79,17 @@ final subsonicApiProvider = Provider<SubsonicApi?>((ref) {
   final server = ref.watch(activeServerProvider);
   if (server == null) return null;
   return SubsonicApi(server);
+});
+
+// -----------------------------------------------------------------------------
+// Cache manager
+// -----------------------------------------------------------------------------
+
+/// Provides the singleton [CacheManager] instance.
+///
+/// Must be initialised via [CacheManager.init] and overridden in `main.dart`.
+final cacheManagerProvider = Provider<CacheManager>((ref) {
+  throw UnimplementedError(
+    'cacheManagerProvider must be overridden with an initialised instance.',
+  );
 });

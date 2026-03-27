@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../../core/audio/audio.dart';
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
 
@@ -545,7 +546,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             onTap: () {
-              // TODO: Play song via audio service
+              if (api == null) return;
+              final handler = ref.read(audioHandlerProvider);
+              handler.playSong(
+                song,
+                streamUrl: api.streamUrl(song.id),
+                coverArtUrl: api.coverArtUrl(song.coverArtId),
+              );
             },
           );
         }),
