@@ -6,12 +6,14 @@ class AppThemeConfig {
     required this.background,
     required this.surface,
     required this.surfaceHigh,
+    required this.surfaceHighest,
     required this.displayName,
   });
   final Color accent;
   final Color background;
   final Color surface;
   final Color surfaceHigh;
+  final Color surfaceHighest;
   final String displayName;
 }
 
@@ -24,6 +26,7 @@ class AppTheme {
       background: Color(0xFF0A0A0A),
       surface: Color(0xFF1A1500),
       surfaceHigh: Color(0xFF2A2000),
+      surfaceHighest: Color(0xFF3A3000),
       displayName: 'Dark + Gold/Amber',
     ),
     'cyanTeal': AppThemeConfig(
@@ -31,6 +34,7 @@ class AppTheme {
       background: Color(0xFF030A0A),
       surface: Color(0xFF001515),
       surfaceHigh: Color(0xFF002020),
+      surfaceHighest: Color(0xFF003030),
       displayName: 'Dark + Cyan/Teal',
     ),
     'coralOrange': AppThemeConfig(
@@ -38,6 +42,7 @@ class AppTheme {
       background: Color(0xFF0A0500),
       surface: Color(0xFF1A0A00),
       surfaceHigh: Color(0xFF2A1000),
+      surfaceHighest: Color(0xFF3A1800),
       displayName: 'Dark + Coral/Orange',
     ),
     'oledWhite': AppThemeConfig(
@@ -45,6 +50,7 @@ class AppTheme {
       background: Color(0xFF000000),
       surface: Color(0xFF111111),
       surfaceHigh: Color(0xFF1A1A1A),
+      surfaceHighest: Color(0xFF222222),
       displayName: 'OLED + White',
     ),
   };
@@ -80,7 +86,7 @@ class AppTheme {
       surfaceContainerLow: c.background,
       surfaceContainer: c.surface,
       surfaceContainerHigh: c.surfaceHigh,
-      surfaceContainerHighest: c.surfaceHigh,
+      surfaceContainerHighest: c.surfaceHighest,
       outline: const Color(0xFF938F99),
       outlineVariant: const Color(0xFF49454F),
     );
@@ -227,9 +233,9 @@ class AppTheme {
     );
   }
 
-  // Keep light theme as alias for now
+  // The app is intentionally dark-only (themeMode: ThemeMode.dark in app.dart).
+  // lightTheme and darkTheme both return the default goldAmber dark theme.
+  // They exist as aliases to satisfy MaterialApp.router's theme/darkTheme parameters.
   static ThemeData get lightTheme => forAccent('goldAmber');
-
-  // Keep dark theme as alias for backward compatibility
   static ThemeData get darkTheme => forAccent('goldAmber');
 }

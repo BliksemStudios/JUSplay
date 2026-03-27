@@ -35,7 +35,9 @@ void main() {
 
     test('AppTheme.themeConfigs exposes display names', () {
       expect(AppTheme.themeConfigs['goldAmber']!.displayName, 'Dark + Gold/Amber');
-      expect(AppTheme.themeConfigs.length, 4);
+      expect(AppTheme.themeConfigs.containsKey('cyanTeal'), isTrue);
+      expect(AppTheme.themeConfigs.containsKey('coralOrange'), isTrue);
+      expect(AppTheme.themeConfigs.containsKey('oledWhite'), isTrue);
     });
   });
 }
