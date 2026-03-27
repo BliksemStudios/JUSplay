@@ -6,6 +6,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/audio/audio.dart';
+import '../../player/widgets/mini_player.dart';
 
 class PlaylistDetailScreen extends ConsumerStatefulWidget {
   const PlaylistDetailScreen({super.key, required this.playlistId});
@@ -141,6 +142,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final api = ref.watch(subsonicApiProvider);
 
     return Scaffold(
+      bottomNavigationBar: const MiniPlayer(),
       body: api == null
           ? _buildNotConnected(colorScheme)
           : _isLoading && _playlist == null

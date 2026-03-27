@@ -27,17 +27,21 @@ class _PlaylistsScreenState extends ConsumerState<PlaylistsScreen> {
   Future<void> _loadPlaylists() async {
     final api = ref.read(subsonicApiProvider);
     if (api == null) {
-      setState(() {
-        _isLoading = false;
-        _error = 'Not connected to a server';
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Not connected to a server';
+        });
+      }
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final playlists = await api.getPlaylists();
@@ -94,21 +98,63 @@ class _PlaylistsScreenState extends ConsumerState<PlaylistsScreen> {
 
     nameController.dispose();
 
-    if (name != null && name.isNotEmpty) {
-      try {
-        await api.createPlaylist(name: name);
-        _loadPlaylists();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Playlist "$name" created')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to create playlist: $e')),
-          );
-        }
+    if (name == null || name.isEmpty) return;
+
+    try {
+      await api.createPlaylist(name: name);
+      await _loadPlaylists();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Playlist "$name" created')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create playlist: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deletePlaylist(Playlist playlist) async {
+    final api = ref.read(subsonicApiProvider);
+    if (api == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete playlist'),
+        content: Text('Delete "${playlist.name}"? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await api.deletePlaylist(playlist.id);
+      await _loadPlaylists();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${playlist.name}" deleted')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
       }
     }
   }
@@ -236,6 +282,7 @@ class _PlaylistsScreenState extends ConsumerState<PlaylistsScreen> {
             playlist: playlist,
             colorScheme: colorScheme,
             onTap: () => context.push('/playlist/${playlist.id}'),
+            onDelete: () => _deletePlaylist(playlist),
             coverArtUrl: ref
                     .read(subsonicApiProvider)
                     ?.coverArtUrl(playlist.coverArtId, size: 80) ??
@@ -253,6 +300,7 @@ class _PlaylistTile extends StatelessWidget {
     required this.playlist,
     required this.colorScheme,
     required this.onTap,
+    required this.onDelete,
     required this.coverArtUrl,
     required this.formattedDuration,
   });
@@ -260,6 +308,7 @@ class _PlaylistTile extends StatelessWidget {
   final Playlist playlist;
   final ColorScheme colorScheme;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
   final String coverArtUrl;
   final String formattedDuration;
 
@@ -290,9 +339,23 @@ class _PlaylistTile extends StatelessWidget {
         '${playlist.songCount} song${playlist.songCount == 1 ? '' : 's'} \u2022 $formattedDuration',
         style: TextStyle(color: colorScheme.onSurfaceVariant),
       ),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: colorScheme.onSurfaceVariant,
+      trailing: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert, color: colorScheme.onSurfaceVariant),
+        onSelected: (value) {
+          if (value == 'delete') onDelete();
+        },
+        itemBuilder: (_) => [
+          const PopupMenuItem(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline, color: Colors.red),
+                SizedBox(width: 12),
+                Text('Delete', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          ),
+        ],
       ),
       onTap: onTap,
     );

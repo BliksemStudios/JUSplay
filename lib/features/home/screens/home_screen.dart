@@ -78,14 +78,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SmartPlaylistsRow(),
             _AlbumSection(
               title: 'Recently Added',
+              icon: Icons.fiber_new_outlined,
               provider: _recentAlbumsProvider,
             ),
             _AlbumSection(
               title: 'Most Played',
+              icon: Icons.trending_up_outlined,
               provider: _frequentAlbumsProvider,
             ),
             _AlbumSection(
               title: 'Random Albums',
+              icon: Icons.shuffle_outlined,
               provider: _randomAlbumsProvider,
             ),
           ],
@@ -102,10 +105,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _AlbumSection extends ConsumerWidget {
   const _AlbumSection({
     required this.title,
+    required this.icon,
     required this.provider,
   });
 
   final String title;
+  final IconData icon;
   final AutoDisposeFutureProvider<List<Album>> provider;
 
   @override
@@ -121,11 +126,17 @@ class _AlbumSection extends ConsumerWidget {
           // Section title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.primary, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),

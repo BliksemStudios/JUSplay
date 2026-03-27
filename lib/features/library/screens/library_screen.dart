@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../core/audio/audio.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/models/models.dart';
 
@@ -45,6 +46,13 @@ final _genresProvider = FutureProvider<List<Genre>>((ref) async {
   return genres;
 });
 
+final _songsProvider = FutureProvider<List<Song>>((ref) async {
+  final api = ref.watch(subsonicApiProvider);
+  if (api == null) return [];
+  final result = await api.search('', songCount: 500);
+  return result.songs;
+});
+
 // ---------------------------------------------------------------------------
 // Library screen
 // ---------------------------------------------------------------------------
@@ -60,12 +68,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
-  static const _tabs = ['Artists', 'Albums', 'Genres'];
+  static const _tabs = ['Artists', 'Albums', 'Genres', 'Songs'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabs.length, vsync: this); // 4 tabs
   }
 
   @override
@@ -105,6 +113,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
             _ArtistsTab(),
             _AlbumsTab(),
             _GenresTab(),
+            _SongsTab(),
           ],
         ),
       ),
@@ -457,6 +466,113 @@ class _GenreList extends StatelessWidget {
             Icons.chevron_right,
             color: colorScheme.onSurfaceVariant,
           ),
+        );
+      },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Songs tab
+// ---------------------------------------------------------------------------
+
+class _SongsTab extends ConsumerWidget {
+  const _SongsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final songsAsync = ref.watch(_songsProvider);
+
+    return songsAsync.when(
+      loading: () => const _ArtistListShimmer(),
+      error: (error, stack) => _ErrorView(
+        message: 'Failed to load songs',
+        onRetry: () => ref.invalidate(_songsProvider),
+      ),
+      data: (songs) {
+        if (songs.isEmpty) {
+          return const _EmptyView(message: 'No songs found');
+        }
+        return _SongList(songs: songs);
+      },
+    );
+  }
+}
+
+class _SongList extends ConsumerWidget {
+  const _SongList({required this.songs});
+
+  final List<Song> songs;
+
+  String _fmt(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final api = ref.watch(subsonicApiProvider);
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: songs.length,
+      itemBuilder: (context, index) {
+        final song = songs[index];
+        final artUrl = api?.coverArtUrl(song.coverArtId, size: 80) ?? '';
+        return ListTile(
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: artUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: artUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, _) => Container(
+                        color: colorScheme.surfaceContainerHigh,
+                        child: Icon(Icons.music_note,
+                            color: colorScheme.onSurfaceVariant, size: 20),
+                      ),
+                      errorWidget: (_, _, _) => Container(
+                        color: colorScheme.surfaceContainerHigh,
+                        child: Icon(Icons.music_note,
+                            color: colorScheme.onSurfaceVariant, size: 20),
+                      ),
+                    )
+                  : Container(
+                      color: colorScheme.surfaceContainerHigh,
+                      child: Icon(Icons.music_note,
+                          color: colorScheme.onSurfaceVariant, size: 20),
+                    ),
+            ),
+          ),
+          title: Text(song.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text(
+            song.artist ?? 'Unknown Artist',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          trailing: Text(
+            _fmt(song.duration),
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
+          ),
+          onTap: () {
+            final handler = ref.read(audioHandlerProvider);
+            if (api == null) return;
+            handler.playQueue(
+              songs,
+              startIndex: index,
+              getStreamUrl: (id) => api.streamUrl(id),
+              getCoverArtUrl: (id) => api.coverArtUrl(id),
+            );
+          },
         );
       },
     );

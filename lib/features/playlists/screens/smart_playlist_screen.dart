@@ -7,6 +7,7 @@ import '../../../core/ai/playlist_presets.dart';
 import '../../../core/audio/audio.dart';
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
+import '../../player/widgets/mini_player.dart';
 
 // Provider: all songs from library (for the AI to pick from)
 // Uses search3 with empty query and high songCount to get a broad list.
@@ -106,6 +107,7 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Smart Playlist')),
+      bottomNavigationBar: const MiniPlayer(),
       body: Column(
         children: [
           // Input area

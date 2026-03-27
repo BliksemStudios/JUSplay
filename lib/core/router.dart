@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/screens/server_login_screen.dart';
+import '../features/player/widgets/mini_player.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/library/screens/library_screen.dart';
 import '../features/search/screens/search_screen.dart';
@@ -193,18 +194,25 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          context.go(_navItems[index].path);
-        },
-        destinations: _navItems.map((item) {
-          return NavigationDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.selectedIcon),
-            label: item.label,
-          );
-        }).toList(),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // MiniPlayer sits above the nav bar; modal bottom sheets open over it
+          const MiniPlayer(),
+          NavigationBar(
+            selectedIndex: currentIndex,
+            onDestinationSelected: (index) {
+              context.go(_navItems[index].path);
+            },
+            destinations: _navItems.map((item) {
+              return NavigationDestination(
+                icon: Icon(item.icon),
+                selectedIcon: Icon(item.selectedIcon),
+                label: item.label,
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

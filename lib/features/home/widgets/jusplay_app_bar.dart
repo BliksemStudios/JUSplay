@@ -46,8 +46,9 @@ class JUSPlayAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          // Content row
-          Padding(
+          // Content row — Positioned.fill so Row fills the 64px area and can centre vertically
+          Positioned.fill(
+            child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -95,6 +96,7 @@ class JUSPlayAppBar extends StatelessWidget implements PreferredSizeWidget {
                   serverName: serverName,
                 ),
               ],
+            ),
             ),
           ),
           // Bottom hairline accent

@@ -249,6 +249,11 @@ class SubsonicApi {
     });
   }
 
+  /// Deletes a playlist by [id].
+  Future<void> deletePlaylist(String id) async {
+    await _get('deletePlaylist.view', queryParameters: {'id': id});
+  }
+
   /// Updates an existing playlist.
   ///
   /// [songIdsToAdd] appends songs; [songIndexesToRemove] removes songs by

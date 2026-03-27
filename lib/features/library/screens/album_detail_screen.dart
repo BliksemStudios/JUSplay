@@ -9,6 +9,7 @@ import '../../../core/api/api.dart';
 import '../../../core/audio/audio.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/models/models.dart';
+import '../../player/widgets/mini_player.dart';
 
 // ---------------------------------------------------------------------------
 // Data class holding album info + its songs
@@ -92,6 +93,7 @@ class AlbumDetailScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      bottomNavigationBar: const MiniPlayer(),
       body: detailAsync.when(
         loading: () => _buildLoadingState(context),
         error: (error, stack) => CustomScrollView(
@@ -535,6 +537,108 @@ class _TrackTile extends ConsumerWidget {
     );
   }
 
+  void _showAddToPlaylistSheet(
+      BuildContext context, WidgetRef ref, Song targetSong) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Consumer(
+          builder: (ctx, ref, _) {
+            final api = ref.watch(subsonicApiProvider);
+            if (api == null) {
+              return const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: Text('Not connected')),
+              );
+            }
+
+            return FutureBuilder(
+              future: api.getPlaylists(),
+              builder: (ctx, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final playlists = snapshot.data ?? [];
+                return SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Text(
+                          'Add to playlist',
+                          style:
+                              Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      if (playlists.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text('No playlists found'),
+                        )
+                      else
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 320),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: playlists.length,
+                            itemBuilder: (ctx, i) {
+                              final pl = playlists[i];
+                              return ListTile(
+                                leading: const Icon(Icons.queue_music),
+                                title: Text(pl.name),
+                                subtitle: Text(
+                                    '${pl.songCount} song${pl.songCount == 1 ? '' : 's'}'),
+                                onTap: () async {
+                                  Navigator.pop(ctx);
+                                  try {
+                                    await api.updatePlaylist(
+                                      id: pl.id,
+                                      songIdsToAdd: [targetSong.id],
+                                    );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Added to ${pl.name}'),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Failed to add: $e'),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showTrackMenu(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -576,7 +680,7 @@ class _TrackTile extends ConsumerWidget {
                 title: const Text('Add to playlist'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Add to playlist picker
+                  _showAddToPlaylistSheet(context, ref, song);
                 },
               ),
               ListTile(

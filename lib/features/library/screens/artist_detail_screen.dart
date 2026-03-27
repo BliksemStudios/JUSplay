@@ -8,6 +8,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/api/api.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/models/models.dart';
+import '../../player/widgets/mini_player.dart';
 
 // ---------------------------------------------------------------------------
 // Data class holding artist info + its albums
@@ -84,6 +85,7 @@ class ArtistDetailScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      bottomNavigationBar: const MiniPlayer(),
       body: detailAsync.when(
         loading: () => _buildLoadingState(context),
         error: (error, stack) => CustomScrollView(
