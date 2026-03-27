@@ -19,6 +19,8 @@ class SettingsStorage {
   static const String _themeModeKey = 'theme_mode';
   static const String _gaplessPlaybackKey = 'gapless_playback';
   static const String _replayGainKey = 'replay_gain';
+  static const String _accentThemeKey = 'accent_theme';
+  static const String _geminiApiKeyKey = 'gemini_api_key';
 
   late final Box<dynamic> _box;
 
@@ -100,4 +102,24 @@ class SettingsStorage {
       _box.get(_replayGainKey, defaultValue: false) as bool;
 
   Future<void> setReplayGain(bool value) => _box.put(_replayGainKey, value);
+
+  // ---------------------------------------------------------------------------
+  // Accent theme key (goldAmber / cyanTeal / coralOrange / oledWhite)
+  // ---------------------------------------------------------------------------
+
+  String get accentTheme =>
+      _box.get(_accentThemeKey, defaultValue: 'goldAmber') as String;
+
+  Future<void> setAccentTheme(String value) =>
+      _box.put(_accentThemeKey, value);
+
+  // ---------------------------------------------------------------------------
+  // Gemini API key
+  // ---------------------------------------------------------------------------
+
+  String get geminiApiKey =>
+      _box.get(_geminiApiKeyKey, defaultValue: '') as String;
+
+  Future<void> setGeminiApiKey(String value) =>
+      _box.put(_geminiApiKeyKey, value);
 }
