@@ -46,14 +46,36 @@ jobs:
       - name: Patch flutter_dynamic_icon for AGP 8+ and Flutter V2
         run: |
           PLUGIN_DIR="$HOME/.pub-cache/hosted/pub.dev/flutter_dynamic_icon-2.1.0/android"
-          # Fix missing namespace (AGP 8+ requirement)
-          if [ -f "$PLUGIN_DIR/build.gradle" ] && ! grep -q 'namespace' "$PLUGIN_DIR/build.gradle"; then
-            sed -i "s|android {|android {\n    namespace 'io.github.tastelessjolt.flutterdynamicicon'|" "$PLUGIN_DIR/build.gradle"
-          fi
-          # Fix V1 embedding API (PluginRegistry.Registrar removed in Flutter 3.41+)
           JAVA="$PLUGIN_DIR/src/main/java/io/github/tastelessjolt/flutterdynamicicon/FlutterDynamicIconPlugin.java"
-          if [ -f "$JAVA" ] && grep -q 'PluginRegistry.Registrar' "$JAVA"; then
-            sed -i 's/public static void registerWith(io.flutter.plugin.common.PluginRegistry.Registrar registrar)/public static void registerWith(@SuppressWarnings("unused") Object registrar)/' "$JAVA"
+          # Replace V1 embedding plugin with clean V2 implementation
+          if [ -f "$JAVA" ]; then
+            cat > "$JAVA" << 'PATCH'
+          package io.github.tastelessjolt.flutterdynamicicon;
+          import android.content.Context;
+          import io.flutter.embedding.engine.plugins.FlutterPlugin;
+          import io.flutter.plugin.common.BinaryMessenger;
+          import io.flutter.plugin.common.MethodChannel;
+          public class FlutterDynamicIconPlugin implements FlutterPlugin {
+            private static final String CHANNEL_NAME = "flutter_dynamic_icon";
+            private MethodChannel channel;
+            @Override
+            public void onAttachedToEngine(FlutterPlugin.FlutterPluginBinding binding) {
+              setupChannel(binding.getBinaryMessenger(), binding.getApplicationContext());
+            }
+            @Override
+            public void onDetachedFromEngine(FlutterPlugin.FlutterPluginBinding binding) {
+              teardownChannel();
+            }
+            private void setupChannel(BinaryMessenger messenger, Context context) {
+              channel = new MethodChannel(messenger, CHANNEL_NAME);
+              channel.setMethodCallHandler(new MethodCallHandlerImpl());
+            }
+            private void teardownChannel() {
+              channel.setMethodCallHandler(null);
+              channel = null;
+            }
+          }
+          PATCH
           fi
 
       - run: flutter build apk --debug
