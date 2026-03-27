@@ -771,13 +771,13 @@ class _TrackTile extends ConsumerWidget {
               ),
               ListTile(
                 leading: Icon(
-                  song.starred != null ? Icons.star : Icons.star_border,
+                  song.starred != null ? Icons.favorite : Icons.favorite_border,
                   color: song.starred != null
-                      ? Colors.amber
+                      ? colorScheme.primary
                       : colorScheme.onSurfaceVariant,
                 ),
                 title: Text(
-                    song.starred != null ? 'Remove from favorites' : 'Star'),
+                    song.starred != null ? 'Remove from favourites' : 'Love'),
                 onTap: () {
                   Navigator.pop(context);
                   _toggleStar(ref);

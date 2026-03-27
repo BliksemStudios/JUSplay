@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/playlist_generator.dart';
 import '../../../core/ai/playlist_presets.dart';
@@ -337,7 +338,6 @@ class _PrivacyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOnDevice = source == AiSource.onDevice;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -345,7 +345,11 @@ class _PrivacyBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        isOnDevice ? '🔒 On-device' : '☁️ Gemini',
+        switch (source) {
+          AiSource.onDevice => '🔒 On-device AI',
+          AiSource.gemini => '☁️ Gemini',
+          AiSource.smart => '⚡ Smart Match',
+        },
         style: const TextStyle(fontSize: 12),
       ),
     );
@@ -401,6 +405,12 @@ class _SongTile extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
       ),
+      trailing: IconButton(
+        icon: Icon(Icons.more_vert,
+            color: theme.colorScheme.onSurfaceVariant, size: 20),
+        visualDensity: VisualDensity.compact,
+        onPressed: () => _showMenu(context, ref, theme),
+      ),
       onTap: () {
         if (api == null) return;
         final handler = ref.read(audioHandlerProvider);
@@ -411,6 +421,86 @@ class _SongTile extends ConsumerWidget {
           getCoverArtUrl: (id) => api.coverArtUrl(id),
         );
       },
+    );
+  }
+
+  void _showMenu(BuildContext context, WidgetRef ref, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final api = ref.read(subsonicApiProvider);
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(song.title,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading:
+                  Icon(Icons.queue_music, color: colorScheme.onSurfaceVariant),
+              title: const Text('Add to queue'),
+              onTap: () {
+                Navigator.pop(ctx);
+                if (api != null) {
+                  ref.read(audioHandlerProvider).addToQueue(
+                        song,
+                        streamUrl: api.streamUrl(song.id),
+                        coverArtUrl: api.coverArtUrl(song.coverArtId),
+                      );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to queue')));
+                }
+              },
+            ),
+            ListTile(
+              leading:
+                  Icon(Icons.auto_awesome, color: colorScheme.onSurfaceVariant),
+              title: const Text('Create smart playlist'),
+              onTap: () {
+                Navigator.pop(ctx);
+                final parts = <String>[
+                  'Songs similar to "${song.title}"',
+                  if (song.artist != null) 'by ${song.artist}',
+                  if (song.genre != null) '— ${song.genre} vibes',
+                ];
+                context.push(Uri(
+                  path: '/smart-playlist',
+                  queryParameters: {'prompt': parts.join(' ')},
+                ).toString());
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                song.starred != null ? Icons.favorite : Icons.favorite_border,
+                color: song.starred != null
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              title:
+                  Text(song.starred != null ? 'Remove from favourites' : 'Love'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                try {
+                  if (song.starred != null) {
+                    await api?.unstar(id: song.id);
+                  } else {
+                    await api?.star(id: song.id);
+                  }
+                } catch (_) {}
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 }

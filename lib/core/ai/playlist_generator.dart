@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/services.dart';
@@ -22,9 +23,6 @@ class PlaylistGenerator {
   static const _methodChannel =
       MethodChannel('com.bliksemstudios.jusplay/ai');
 
-  static const int _maxSongLines = 500;
-  static const int _maxArtists = 100;
-
   /// Builds the Gemini prompt string.
   static String buildPrompt({
     required String userRequest,
@@ -32,7 +30,7 @@ class PlaylistGenerator {
     required List<String> artists,
     required List<String> songLines,
   }) {
-    return '''You are a music curator. Given the user\'s library below, select up to 25 song IDs that best match the request. Return ONLY a valid JSON array of song ID strings.
+    return '''You are a music curator. Given the user\'s library below, select up to 25 song IDs that best match the request. IMPORTANT: Ensure artist diversity — pick no more than 3 songs from any single artist. Spread picks across many different artists. Return ONLY a valid JSON array of song ID strings.
 
 Library genres: ${genres.join(', ')}
 Artists: ${artists.join(', ')}
@@ -83,19 +81,27 @@ Response format: ["id1","id2","id3"]''';
     required List<Song> allSongs,
     void Function(String status)? onStatus,
   }) async {
+    // 1. Try on-device AI (iOS Foundation Models)
     final nativeResult = await _tryNativeAi(userRequest, allSongs, onStatus);
     if (nativeResult != null && nativeResult.isNotEmpty) {
       return (songs: nativeResult, source: AiSource.onDevice);
     }
 
-    if (geminiApiKey.isEmpty) {
-      throw PlaylistGenerationException(
-        'No AI available. Add a Gemini API key in Settings → AI Features.',
-      );
+    // 2. Try cloud AI (Gemini) if API key is configured — multi-step like on-device
+    if (geminiApiKey.isNotEmpty) {
+      return _generateWithGeminiMultiStep(userRequest, allSongs, onStatus);
     }
 
-    onStatus?.call('Sending to Gemini…');
-    return _generateWithGemini(userRequest, allSongs);
+    // 3. Fall back to smart algorithmic matching (works offline, no key)
+    onStatus?.call('Building smart playlist…');
+    final result = _generateSmart(userRequest, allSongs, onStatus);
+    if (result.isNotEmpty) {
+      return (songs: result, source: AiSource.smart);
+    }
+
+    throw PlaylistGenerationException(
+      'Could not generate a playlist. Try a different description.',
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -202,7 +208,7 @@ Response format: ["id1","id2","id3"]''';
         return candidates.take(15).toList();
       }
 
-      return allPicks.take(25).toList();
+      return _enforceArtistDiversity(allPicks);
     } on MissingPluginException {
       return null;
     } on PlatformException catch (e) {
@@ -225,67 +231,319 @@ Response format: ["id1","id2","id3"]''';
   }
 
   // ---------------------------------------------------------------------------
+  // Smart algorithmic fallback (no AI / no API key needed)
+  // ---------------------------------------------------------------------------
+
+  /// Keyword → genre mapping for common mood/activity requests.
+  static const _moodGenres = <String, List<String>>{
+    'workout': ['Metal', 'Hard Rock', 'Hip-Hop', 'EDM', 'Punk', 'Drum and Bass'],
+    'gym': ['Metal', 'Hard Rock', 'Hip-Hop', 'EDM', 'Punk', 'Drum and Bass'],
+    'exercise': ['Metal', 'Hard Rock', 'Hip-Hop', 'EDM', 'Punk'],
+    'running': ['EDM', 'Hip-Hop', 'Pop', 'Drum and Bass', 'Trance'],
+    'chill': ['Jazz', 'Lo-Fi', 'Ambient', 'Soul', 'R&B', 'Acoustic', 'Indie'],
+    'relax': ['Jazz', 'Lo-Fi', 'Ambient', 'Classical', 'Acoustic', 'New Age'],
+    'sleep': ['Ambient', 'Classical', 'New Age', 'Lo-Fi'],
+    'study': ['Lo-Fi', 'Ambient', 'Classical', 'Jazz', 'Post-Rock'],
+    'focus': ['Lo-Fi', 'Ambient', 'Classical', 'Electronic', 'Post-Rock'],
+    'party': ['Pop', 'EDM', 'Hip-Hop', 'Dance', 'Reggaeton', 'House'],
+    'dance': ['EDM', 'Pop', 'Dance', 'House', 'Disco', 'Techno'],
+    'road trip': ['Rock', 'Classic Rock', 'Pop', 'Country', 'Indie'],
+    'drive': ['Rock', 'Classic Rock', 'Pop', 'Hip-Hop', 'Electronic'],
+    'sad': ['Blues', 'Ballad', 'Acoustic', 'Indie', 'Singer-Songwriter'],
+    'melancholy': ['Blues', 'Ballad', 'Acoustic', 'Post-Rock', 'Shoegaze'],
+    'happy': ['Pop', 'Reggae', 'Funk', 'Soul', 'Ska'],
+    'energetic': ['Rock', 'Metal', 'Punk', 'EDM', 'Hip-Hop'],
+    'aggressive': ['Metal', 'Heavy Metal', 'Thrash Metal', 'Hardcore', 'Punk'],
+    'romantic': ['R&B', 'Soul', 'Jazz', 'Ballad', 'Pop'],
+    'morning': ['Pop', 'Indie', 'Acoustic', 'Folk', 'Jazz'],
+    'evening': ['Jazz', 'Soul', 'Lo-Fi', 'R&B', 'Ambient'],
+    'dinner': ['Jazz', 'Soul', 'Classical', 'Bossa Nova', 'Acoustic'],
+    'cooking': ['Jazz', 'Funk', 'Soul', 'Pop', 'Reggae'],
+    'gaming': ['Metal', 'Electronic', 'EDM', 'Synthwave', 'Drum and Bass'],
+    'coding': ['Lo-Fi', 'Electronic', 'Ambient', 'Post-Rock', 'Synthwave'],
+    'rock': ['Rock', 'Classic Rock', 'Hard Rock', 'Alternative', 'Indie Rock'],
+    'metal': ['Metal', 'Heavy Metal', 'Thrash Metal', 'Death Metal', 'Nu Metal'],
+    'jazz': ['Jazz', 'Smooth Jazz', 'Bebop', 'Fusion'],
+    'hip hop': ['Hip-Hop', 'Rap', 'Trap', 'R&B'],
+    'rap': ['Hip-Hop', 'Rap', 'Trap'],
+    'classical': ['Classical', 'Orchestral', 'Chamber Music'],
+    'country': ['Country', 'Americana', 'Folk', 'Bluegrass'],
+    'electronic': ['Electronic', 'EDM', 'House', 'Techno', 'Trance'],
+    'pop': ['Pop', 'Synth-Pop', 'Indie Pop', 'K-Pop'],
+    'blues': ['Blues', 'Delta Blues', 'Electric Blues'],
+    'folk': ['Folk', 'Acoustic', 'Singer-Songwriter', 'Americana'],
+    'punk': ['Punk', 'Pop Punk', 'Post-Punk', 'Hardcore'],
+    'reggae': ['Reggae', 'Ska', 'Dub'],
+    'soul': ['Soul', 'R&B', 'Funk', 'Motown'],
+    'indie': ['Indie', 'Indie Rock', 'Indie Pop', 'Alternative'],
+  };
+
+  List<Song> _generateSmart(
+    String userRequest,
+    List<Song> allSongs,
+    void Function(String status)? onStatus,
+  ) {
+    final requestLower = userRequest.toLowerCase();
+    final words = requestLower.split(RegExp(r'\s+'));
+
+    // Score each song based on keyword matches
+    onStatus?.call('Analyzing your music library…');
+    final scores = <Song, double>{};
+
+    // Find which genre keywords match the request
+    final targetGenres = <String>{};
+    for (final entry in _moodGenres.entries) {
+      if (requestLower.contains(entry.key)) {
+        targetGenres.addAll(entry.value.map((g) => g.toLowerCase()));
+      }
+    }
+
+    // Also match raw words against genres directly
+    final allGenres = allSongs
+        .map((s) => s.genre)
+        .whereType<String>()
+        .toSet();
+    for (final genre in allGenres) {
+      final genreLower = genre.toLowerCase();
+      for (final word in words) {
+        if (word.length >= 3 && genreLower.contains(word)) {
+          targetGenres.add(genreLower);
+        }
+      }
+    }
+
+    onStatus?.call('Matching songs to your vibe…');
+    for (final song in allSongs) {
+      var score = 0.0;
+      final genre = (song.genre ?? '').toLowerCase();
+      final artist = (song.artist ?? '').toLowerCase();
+      final title = song.title.toLowerCase();
+
+      // Genre match (strongest signal)
+      if (targetGenres.isNotEmpty && targetGenres.contains(genre)) {
+        score += 10.0;
+      }
+
+      // Artist name in request (lower weight to avoid artist-heavy lists)
+      if (artist.isNotEmpty) {
+        for (final word in words) {
+          if (word.length >= 3 && artist.contains(word)) {
+            score += 3.0;
+            break;
+          }
+        }
+      }
+
+      // Title keyword match
+      for (final word in words) {
+        if (word.length >= 3 && title.contains(word)) {
+          score += 2.0;
+          break;
+        }
+      }
+
+      // Small random jitter for variety
+      score += Random().nextDouble() * 2.0;
+
+      if (score > 0) {
+        scores[song] = score;
+      }
+    }
+
+    // If no matches at all, do genre-weighted random
+    if (scores.isEmpty && allSongs.isNotEmpty) {
+      onStatus?.call('Picking a mix for you…');
+      final shuffled = List.of(allSongs)..shuffle(Random());
+      return shuffled.take(25).toList();
+    }
+
+    // Sort by score descending, then pick with artist diversity cap
+    onStatus?.call('Finalizing your playlist…');
+    final sorted = scores.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return _enforceArtistDiversity(sorted.map((e) => e.key).toList());
+  }
+
+  // ---------------------------------------------------------------------------
   // Gemini: single-shot approach (large context window)
   // ---------------------------------------------------------------------------
 
-  Future<({List<Song> songs, AiSource source})> _generateWithGemini(
+  /// Preferred model name prefixes, best first.
+  static const _modelPreference = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+  ];
+
+  /// Calls the Gemini REST API to list models available for this key,
+  /// then picks the best one that supports generateContent.
+  Future<String> _pickBestGeminiModel() async {
+    try {
+      final uri = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models?key=$geminiApiKey',
+      );
+      final client = HttpClient();
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      client.close(force: true);
+
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final models = (json['models'] as List?) ?? [];
+
+      // Collect model names that support generateContent
+      final available = <String>{};
+      for (final m in models) {
+        final name = (m['name'] as String?)?.replaceFirst('models/', '') ?? '';
+        final methods = (m['supportedGenerationMethods'] as List?) ?? [];
+        if (methods.contains('generateContent') && name.isNotEmpty) {
+          available.add(name);
+        }
+      }
+
+      print('[AI] Available Gemini models: $available');
+
+      // Pick the best by preference order
+      for (final preferred in _modelPreference) {
+        // Exact match first
+        if (available.contains(preferred)) return preferred;
+        // Prefix match (e.g. "gemini-2.0-flash" matches "gemini-2.0-flash-001")
+        final match = available.where((m) => m.startsWith(preferred)).firstOrNull;
+        if (match != null) return match;
+      }
+
+      // If none from our preference list, just use the first available
+      if (available.isNotEmpty) return available.first;
+    } catch (e) {
+      print('[AI] Failed to list models: $e');
+    }
+
+    // Fallback if API call fails
+    return 'gemini-2.0-flash';
+  }
+
+  /// Gemini multi-step: same strategy as on-device but with larger batches (50).
+  Future<({List<Song> songs, AiSource source})> _generateWithGeminiMultiStep(
     String userRequest,
     List<Song> allSongs,
+    void Function(String status)? onStatus,
   ) async {
-    final genres = allSongs
-        .map((s) => s.genre)
-        .whereType<String>()
-        .toSet()
-        .toList();
-    final artists = allSongs
-        .map((s) => s.artist)
-        .whereType<String>()
-        .toSet()
-        .take(_maxArtists)
-        .toList();
-    final songLines = allSongs.take(_maxSongLines).map((s) {
-      return '${s.id}|${s.title}|${s.artist ?? ''}|${s.genre ?? ''}|${s.duration}';
-    }).toList();
+    final modelName = await _pickBestGeminiModel();
+    print('[AI] Using Gemini model: $modelName');
+    final model = GenerativeModel(model: modelName, apiKey: geminiApiKey);
 
-    final prompt = buildPrompt(
-      userRequest: userRequest,
-      genres: genres,
-      artists: artists,
-      songLines: songLines,
-    );
-
-    final model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: geminiApiKey,
-    );
-
-    final content = [Content.text(prompt)];
-    final GenerateContentResponse response;
-    try {
-      response = await model.generateContent(content);
-    } catch (e) {
-      throw PlaylistGenerationException('Gemini request failed: $e');
-    }
-    final text = response.text ?? '';
-
-    final ids = parseResponse(text);
-    if (ids.isEmpty) {
-      throw PlaylistGenerationException(
-        'AI returned an empty or invalid playlist.',
-      );
+    Future<String?> callGemini(String prompt) async {
+      try {
+        final resp = await model.generateContent([Content.text(prompt)]);
+        return resp.text;
+      } catch (e) {
+        print('[AI] Gemini call failed: $e');
+        return null;
+      }
     }
 
-    final songMap = {for (final s in allSongs) s.id: s};
-    final result = ids
-        .map((id) => songMap[id])
-        .whereType<Song>()
-        .toList();
+    // Step 1: Genre matching
+    onStatus?.call('Matching genres to your vibe…');
+    final genreSongs = <String, List<Song>>{};
+    for (final s in allSongs) {
+      final g = s.genre ?? 'Unknown';
+      (genreSongs[g] ??= []).add(s);
+    }
+    final genreList = genreSongs.keys.toList();
+    if (genreList.isEmpty) {
+      throw PlaylistGenerationException('No genres found in library.');
+    }
 
-    return (songs: result, source: AiSource.gemini);
+    final genrePrompt =
+        'A user wants music for: "$userRequest"\n\n'
+        'Available genres: ${genreList.join(", ")}\n\n'
+        'Which genres fit best? Reply with ONLY a JSON array of genre names, like ["Rock","Jazz"].';
+
+    final genreResponse = await callGemini(genrePrompt);
+    final matchedGenres = genreResponse != null ? parseResponse(genreResponse) : <String>[];
+    print('[AI] Gemini Step 1 - matched genres: $matchedGenres');
+
+    // Step 2: Filter songs by matched genres
+    onStatus?.call('Filtering songs by genre…');
+    List<Song> candidates;
+    if (matchedGenres.isNotEmpty) {
+      final matchedLower = matchedGenres.map((g) => g.toLowerCase()).toSet();
+      candidates = allSongs.where((s) => matchedLower.contains((s.genre ?? '').toLowerCase())).toList();
+    } else {
+      candidates = List.of(allSongs);
+    }
+    if (candidates.isEmpty) candidates = List.of(allSongs);
+    candidates.shuffle(Random());
+
+    // Step 3: Batched evaluation — 50 songs per batch for Gemini's larger context
+    final allPicks = <Song>[];
+    const batchSize = 50;
+    final batches = <List<Song>>[];
+    for (var i = 0; i < candidates.length; i += batchSize) {
+      batches.add(candidates.sublist(i, (i + batchSize > candidates.length) ? candidates.length : i + batchSize));
+    }
+    print('[AI] Gemini Step 2 - ${candidates.length} candidates in ${batches.length} batches');
+
+    onStatus?.call('Curating your playlist…');
+    for (var b = 0; b < batches.length; b++) {
+      onStatus?.call('Evaluating songs… (${b + 1}/${batches.length})');
+      final batch = batches[b];
+      final songLines = <String>[];
+      for (var i = 0; i < batch.length; i++) {
+        songLines.add('${i + 1}. ${batch[i].title} by ${batch[i].artist ?? "Unknown"}');
+      }
+
+      final songPrompt =
+          'Pick the best songs for "$userRequest" from this list. '
+          'Ensure artist diversity — no more than 3 songs from any single artist.\n\n'
+          '${songLines.join("\n")}\n\n'
+          'Reply with ONLY the song numbers as a JSON array, like [1,3,5]. Pick all that fit the mood.';
+
+      final songResponse = await callGemini(songPrompt);
+      if (songResponse == null) continue;
+
+      final pickedNumbers = parseNumberResponse(songResponse);
+      print('[AI] Gemini Batch ${b + 1}/${batches.length} - picked: $pickedNumbers');
+
+      final batchPicks = pickedNumbers
+          .where((n) => n >= 1 && n <= batch.length)
+          .map((n) => batch[n - 1]);
+      allPicks.addAll(batchPicks);
+
+      if (allPicks.length >= 25) break;
+    }
+
+    if (allPicks.isEmpty) {
+      return (songs: candidates.take(15).toList(), source: AiSource.gemini);
+    }
+
+    return (songs: _enforceArtistDiversity(allPicks), source: AiSource.gemini);
+  }
+
+  /// Caps songs per artist to ensure diverse playlists across all AI sources,
+  /// then shuffles to avoid artist clustering.
+  static List<Song> _enforceArtistDiversity(List<Song> songs, {int maxPerArtist = 3, int maxTotal = 25}) {
+    final picks = <Song>[];
+    final artistCount = <String, int>{};
+    for (final song in songs) {
+      if (picks.length >= maxTotal) break;
+      final artist = (song.artist ?? 'Unknown').toLowerCase();
+      final count = artistCount[artist] ?? 0;
+      if (count < maxPerArtist) {
+        picks.add(song);
+        artistCount[artist] = count + 1;
+      }
+    }
+    picks.shuffle(Random());
+    return picks;
   }
 }
 
-enum AiSource { onDevice, gemini }
+enum AiSource { onDevice, gemini, smart }
 
 class PlaylistGenerationException implements Exception {
   const PlaylistGenerationException(this.message);

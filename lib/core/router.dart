@@ -14,6 +14,7 @@ import '../features/library/screens/artist_detail_screen.dart';
 import '../features/library/screens/album_detail_screen.dart';
 import '../features/playlists/screens/playlist_detail_screen.dart';
 import '../features/playlists/screens/smart_playlist_screen.dart';
+import '../features/playlists/screens/favourites_screen.dart';
 import 'providers/providers.dart';
 
 /// Derives authentication state from the active server.
@@ -119,6 +120,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return PlaylistDetailScreen(playlistId: id);
         },
+      ),
+      GoRoute(
+        path: '/favourites',
+        name: 'favourites',
+        builder: (context, state) => const FavouritesScreen(),
       ),
       GoRoute(
         path: '/smart-playlist',

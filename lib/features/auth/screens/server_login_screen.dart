@@ -31,7 +31,6 @@ class _ServerLoginScreenState extends ConsumerState<ServerLoginScreen> {
   bool _obscurePassword = true;
   String? _testResult; // null = no result, 'success', or an error message
   List<Server> _savedServers = [];
-  bool _loadingServers = true;
 
   @override
   void initState() {
@@ -54,7 +53,6 @@ class _ServerLoginScreenState extends ConsumerState<ServerLoginScreen> {
     if (mounted) {
       setState(() {
         _savedServers = servers;
-        _loadingServers = false;
       });
     }
   }
@@ -198,14 +196,6 @@ class _ServerLoginScreenState extends ConsumerState<ServerLoginScreen> {
 
       await _loadServers();
     }
-  }
-
-  void _clearForm() {
-    _nameController.clear();
-    _urlController.clear();
-    _usernameController.clear();
-    _passwordController.clear();
-    setState(() => _testResult = null);
   }
 
   // ---------------------------------------------------------------------------

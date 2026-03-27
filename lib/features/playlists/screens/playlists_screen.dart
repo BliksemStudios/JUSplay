@@ -273,9 +273,30 @@ class _PlaylistsScreenState extends ConsumerState<PlaylistsScreen> {
       onRefresh: _loadPlaylists,
       child: ListView.builder(
         padding: const EdgeInsets.only(bottom: 88),
-        itemCount: playlists.length,
+        itemCount: playlists.length + 1, // +1 for Favourites
         itemBuilder: (context, index) {
-          final playlist = playlists[index];
+          // First item: Favourites
+          if (index == 0) {
+            return ListTile(
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  color: colorScheme.primaryContainer,
+                  child: Icon(Icons.favorite, color: colorScheme.primary),
+                ),
+              ),
+              title: const Text('Favourites'),
+              subtitle: Text(
+                'Your starred songs',
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
+              ),
+              onTap: () => context.push('/favourites'),
+            );
+          }
+
+          final playlist = playlists[index - 1];
           return _PlaylistTile(
             playlist: playlist,
             colorScheme: colorScheme,

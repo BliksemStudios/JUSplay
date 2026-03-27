@@ -68,43 +68,49 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
-	<key>CFBundleIcons</key>
-	<dict>
-		<key>CFBundlePrimaryIcon</key>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>audio</string>
+		</array>
+		<key>CFBundleIcons</key>
 		<dict>
-			<key>CFBundleIconFiles</key>
-			<array>
-				<string>AppIcon</string>
-			</array>
+			<key>CFBundlePrimaryIcon</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon</string>
+				</array>
+			</dict>
+			<key>CFBundleAlternateIcons</key>
+			<dict>
+				<key>icon_cyan</key>
+				<dict>
+					<key>CFBundleIconFiles</key>
+					<array>
+						<string>icon_cyan</string>
+					</array>
+					<key>UIPrerenderedIcon</key>
+					<true/>
+				</dict>
+				<key>icon_coral</key>
+				<dict>
+					<key>CFBundleIconFiles</key>
+					<array>
+						<string>icon_coral</string>
+					</array>
+					<key>UIPrerenderedIcon</key>
+					<true/>
+				</dict>
+				<key>icon_oled</key>
+				<dict>
+					<key>CFBundleIconFiles</key>
+					<array>
+						<string>icon_oled</string>
+					</array>
+					<key>UIPrerenderedIcon</key>
+					<true/>
+				</dict>
+			</dict>
 		</dict>
-		<key>CFBundleAlternateIcons</key>
-		<dict>
-			<key>icon_cyan</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array><string>icon_cyan</string></array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>icon_coral</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array><string>icon_coral</string></array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>icon_oled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array><string>icon_oled</string></array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-		</dict>
-	</dict>
 	</dict>
 </plist>

@@ -170,6 +170,13 @@ class NowPlayingScreen extends ConsumerWidget {
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
+                        IconButton(
+                          onPressed: () => _showSongMenu(context, ref, mediaItem),
+                          icon: Icon(
+                            Icons.more_vert,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ),
 
@@ -330,6 +337,135 @@ class NowPlayingScreen extends ConsumerWidget {
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 
+  void _showSongMenu(BuildContext context, WidgetRef ref, MediaItem mediaItem) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final songId = mediaItem.extras?['songId'] as String?;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  mediaItem.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Icon(Icons.playlist_add,
+                    color: colorScheme.onSurfaceVariant),
+                title: const Text('Add to playlist'),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (songId != null) {
+                    _showAddToPlaylistSheet(context, ref, songId);
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.auto_awesome,
+                    color: colorScheme.onSurfaceVariant),
+                title: const Text('Create smart playlist'),
+                subtitle: Text(
+                  'Find similar songs using AI',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  final parts = <String>[
+                    'Songs similar to "${mediaItem.title}"',
+                    if (mediaItem.artist != null) 'by ${mediaItem.artist}',
+                    if (mediaItem.genre != null) '— ${mediaItem.genre} vibes',
+                  ];
+                  context.push(
+                    Uri(
+                      path: '/smart-playlist',
+                      queryParameters: {'prompt': parts.join(' ')},
+                    ).toString(),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.favorite_border,
+                    color: colorScheme.onSurfaceVariant),
+                title: const Text('Love'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _toggleStar(ref, mediaItem);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddToPlaylistSheet(BuildContext context, WidgetRef ref, String songId) async {
+    final api = ref.read(subsonicApiProvider);
+    if (api == null) return;
+    try {
+      final playlists = await api.getPlaylists();
+      if (!context.mounted) return;
+      showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Add to playlist',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                const Divider(height: 1),
+                if (playlists.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text('No playlists yet'),
+                  )
+                else
+                  ...playlists.map((p) => ListTile(
+                        leading: const Icon(Icons.queue_music),
+                        title: Text(p.name),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          try {
+                            await api.updatePlaylist(
+                                id: p.id, songIdsToAdd: [songId]);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('Added to "${p.name}"')),
+                              );
+                            }
+                          } catch (_) {}
+                        },
+                      )),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (_) {}
+  }
+
   Future<void> _toggleStar(WidgetRef ref, MediaItem mediaItem) async {
     final api = ref.read(subsonicApiProvider);
     if (api == null) return;
@@ -347,16 +483,18 @@ class NowPlayingScreen extends ConsumerWidget {
     WidgetRef ref,
     ColorScheme colorScheme,
   ) {
-    final queueAsync = ref.read(queueProvider);
-    final queue = queueAsync.valueOrNull ?? [];
     final handler = ref.read(audioHandlerProvider);
-    final currentIndex = handler.currentIndex;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (context) {
+        // Read queue directly from the handler's mediaItems list —
+        // the stream may not have emitted yet on first open.
+        final queue = handler.queue.value;
+        final currentIndex = handler.currentIndex;
+
         return DraggableScrollableSheet(
           initialChildSize: 0.6,
           minChildSize: 0.3,

@@ -277,6 +277,16 @@ class SubsonicApi {
   // Starring / Favorites
   // ---------------------------------------------------------------------------
 
+  /// Returns all starred (favourited) songs.
+  Future<List<Song>> getStarred() async {
+    final data = await _get('getStarred2.view');
+    final starred = data['starred2']?['song'] as List<dynamic>?;
+    if (starred == null) return [];
+    return starred
+        .map((s) => Song.fromJson(s as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Stars (favorites) an item. Provide exactly one of the IDs.
   Future<void> star({String? id, String? albumId, String? artistId}) async {
     await _get('star.view', queryParameters: {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -93,6 +94,88 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
       startIndex: 0,
       getStreamUrl: (id) => api.streamUrl(id),
       getCoverArtUrl: (id) => api.coverArtUrl(id),
+    );
+  }
+
+  void _showSongMenu(BuildContext context, Song song) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final api = ref.read(subsonicApiProvider);
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(song.title,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Icon(Icons.queue_music,
+                    color: colorScheme.onSurfaceVariant),
+                title: const Text('Add to queue'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (api != null) {
+                    ref.read(audioHandlerProvider).addToQueue(
+                          song,
+                          streamUrl: api.streamUrl(song.id),
+                          coverArtUrl: api.coverArtUrl(song.coverArtId),
+                        );
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(const SnackBar(content: Text('Added to queue')));
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.auto_awesome,
+                    color: colorScheme.onSurfaceVariant),
+                title: const Text('Create smart playlist'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  final parts = <String>[
+                    'Songs similar to "${song.title}"',
+                    if (song.artist != null) 'by ${song.artist}',
+                    if (song.genre != null) '— ${song.genre} vibes',
+                  ];
+                  context.push(Uri(
+                    path: '/smart-playlist',
+                    queryParameters: {'prompt': parts.join(' ')},
+                  ).toString());
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  song.starred != null ? Icons.favorite : Icons.favorite_border,
+                  color: song.starred != null
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                title: Text(song.starred != null ? 'Remove from favourites' : 'Love'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    if (song.starred != null) {
+                      await api?.unstar(id: song.id);
+                    } else {
+                      await api?.star(id: song.id);
+                    }
+                  } catch (_) {}
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -384,12 +467,24 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    trailing: Text(
-                      _formatDuration(song.duration),
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                      ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatDuration(song.duration),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: Icon(Icons.more_vert,
+                              color: colorScheme.onSurfaceVariant, size: 20),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _showSongMenu(context, song),
+                        ),
+                      ],
                     ),
                     onTap: () =>
                         _playSong(playlist.songs, index),
