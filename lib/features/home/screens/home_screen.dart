@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
 import '../widgets/jusplay_app_bar.dart';
+import '../widgets/smart_playlists_row.dart';
 
 // -----------------------------------------------------------------------------
 // Data providers
@@ -74,6 +75,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 96),
           children: [
+            const SmartPlaylistsRow(),
             _AlbumSection(
               title: 'Recently Added',
               provider: _recentAlbumsProvider,
