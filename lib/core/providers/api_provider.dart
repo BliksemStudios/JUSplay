@@ -108,7 +108,7 @@ class AccentThemeNotifier extends StateNotifier<String> {
 
   static const Map<String, String?> _iconNames = {
     'goldAmber': null,        // primary icon — pass null to reset
-    'cyanTeal': 'icon_teal',
+    'cyanTeal': 'icon_cyan',
     'coralOrange': 'icon_coral',
     'oledWhite': 'icon_oled',
   };
@@ -119,11 +119,15 @@ class AccentThemeNotifier extends StateNotifier<String> {
     // Switch iOS app icon (no-op on Android)
     try {
       final supported = await FlutterDynamicIcon.supportsAlternateIcons;
+      final iconName = _iconNames[key];
+      print('[Icon] setTheme("$key") -> iconName="$iconName", supported=$supported');
       if (supported && _iconNames.containsKey(key)) {
-        await FlutterDynamicIcon.setAlternateIconName(_iconNames[key]);
+        await FlutterDynamicIcon.setAlternateIconName(iconName);
+        final current = await FlutterDynamicIcon.getAlternateIconName;
+        print('[Icon] After set: current alternate icon = "$current"');
       }
     } catch (e) {
-      debugPrint('Icon switch failed for key "$key": $e');
+      print('[Icon] FAILED for key "$key": $e');
     }
   }
 }

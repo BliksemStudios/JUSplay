@@ -83,10 +83,10 @@
 		</dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>icon_teal</key>
+			<key>icon_cyan</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
-				<array><string>icon_teal</string></array>
+				<array><string>icon_cyan</string></array>
 				<key>UIPrerenderedIcon</key>
 				<true/>
 			</dict>

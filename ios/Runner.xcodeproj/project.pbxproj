@@ -18,9 +18,15 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		AA1234560000000000000001 /* AiMethodChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1234560000000000000000 /* AiMethodChannel.swift */; };
-		BB0000000000000000000001 /* icon_teal.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000010 /* icon_teal.png */; };
+		BB0000000000000000000001 /* icon_cyan.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000010 /* icon_cyan.png */; };
 		BB0000000000000000000002 /* icon_coral.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000011 /* icon_coral.png */; };
 		BB0000000000000000000003 /* icon_oled.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000012 /* icon_oled.png */; };
+		BB0000000000000000000004 /* icon_cyan@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000013 /* icon_cyan@2x.png */; };
+		BB0000000000000000000005 /* icon_cyan@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000014 /* icon_cyan@3x.png */; };
+		BB0000000000000000000006 /* icon_coral@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000015 /* icon_coral@2x.png */; };
+		BB0000000000000000000007 /* icon_coral@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000016 /* icon_coral@3x.png */; };
+		BB0000000000000000000008 /* icon_oled@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000017 /* icon_oled@2x.png */; };
+		BB0000000000000000000009 /* icon_oled@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000018 /* icon_oled@3x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,9 +77,15 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA1234560000000000000000 /* AiMethodChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiMethodChannel.swift; sourceTree = "<group>"; };
-		BB0000000000000000000010 /* icon_teal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_teal.png; sourceTree = "<group>"; };
+		BB0000000000000000000010 /* icon_cyan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_cyan.png; sourceTree = "<group>"; };
 		BB0000000000000000000011 /* icon_coral.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_coral.png; sourceTree = "<group>"; };
 		BB0000000000000000000012 /* icon_oled.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_oled.png; sourceTree = "<group>"; };
+		BB0000000000000000000013 /* icon_cyan@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cyan@2x.png"; sourceTree = "<group>"; };
+		BB0000000000000000000014 /* icon_cyan@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_cyan@3x.png"; sourceTree = "<group>"; };
+		BB0000000000000000000015 /* icon_coral@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_coral@2x.png"; sourceTree = "<group>"; };
+		BB0000000000000000000016 /* icon_coral@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_coral@3x.png"; sourceTree = "<group>"; };
+		BB0000000000000000000017 /* icon_oled@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_oled@2x.png"; sourceTree = "<group>"; };
+		BB0000000000000000000018 /* icon_oled@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_oled@3x.png"; sourceTree = "<group>"; };
 		B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -159,9 +171,15 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				AA1234560000000000000000 /* AiMethodChannel.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
-				BB0000000000000000000010 /* icon_teal.png */,
+				BB0000000000000000000010 /* icon_cyan.png */,
+				BB0000000000000000000013 /* icon_cyan@2x.png */,
+				BB0000000000000000000014 /* icon_cyan@3x.png */,
 				BB0000000000000000000011 /* icon_coral.png */,
+				BB0000000000000000000015 /* icon_coral@2x.png */,
+				BB0000000000000000000016 /* icon_coral@3x.png */,
 				BB0000000000000000000012 /* icon_oled.png */,
+				BB0000000000000000000017 /* icon_oled@2x.png */,
+				BB0000000000000000000018 /* icon_oled@3x.png */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -278,9 +296,15 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
-				BB0000000000000000000001 /* icon_teal.png in Resources */,
+				BB0000000000000000000001 /* icon_cyan.png in Resources */,
+				BB0000000000000000000004 /* icon_cyan@2x.png in Resources */,
+				BB0000000000000000000005 /* icon_cyan@3x.png in Resources */,
 				BB0000000000000000000002 /* icon_coral.png in Resources */,
+				BB0000000000000000000006 /* icon_coral@2x.png in Resources */,
+				BB0000000000000000000007 /* icon_coral@3x.png in Resources */,
 				BB0000000000000000000003 /* icon_oled.png in Resources */,
+				BB0000000000000000000008 /* icon_oled@2x.png in Resources */,
+				BB0000000000000000000009 /* icon_oled@3x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
