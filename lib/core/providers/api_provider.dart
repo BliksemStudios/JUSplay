@@ -118,11 +118,11 @@ class AccentThemeNotifier extends StateNotifier<String> {
     // Switch iOS app icon (no-op on Android)
     try {
       final supported = await FlutterDynamicIcon.supportsAlternateIcons;
-      if (supported) {
+      if (supported && _iconNames.containsKey(key)) {
         await FlutterDynamicIcon.setAlternateIconName(_iconNames[key]);
       }
-    } catch (_) {
-      // Icon switching is a nice-to-have — swallow errors silently
+    } catch (e) {
+      assert(false, 'Icon switch failed for key "$key": $e');
     }
   }
 }
