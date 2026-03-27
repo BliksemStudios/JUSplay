@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
+import '../widgets/jusplay_app_bar.dart';
 
 // -----------------------------------------------------------------------------
 // Data providers
@@ -63,31 +64,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final activeServer = ref.watch(activeServerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('JUSPlay'),
-        actions: [
-          Tooltip(
-            message: activeServer != null
-                ? 'Connected to ${activeServer.name}'
-                : 'Not connected',
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Icon(
-                activeServer != null
-                    ? Icons.cloud_done_outlined
-                    : Icons.cloud_off_outlined,
-                color: activeServer != null
-                    ? Colors.green
-                    : Theme.of(context).colorScheme.error,
-              ),
-            ),
-          ),
-        ],
+      appBar: JUSPlayAppBar(
+        accentColor: Theme.of(context).colorScheme.primary,
+        serverName: activeServer?.name,
+        isConnected: activeServer != null,
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 32),
+          padding: const EdgeInsets.only(bottom: 96),
           children: [
             _AlbumSection(
               title: 'Recently Added',
