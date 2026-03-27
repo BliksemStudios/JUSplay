@@ -1,11 +1,14 @@
 import Flutter
 import Foundation
+import FoundationModels
 
-/// Stub for Apple Foundation Models AI integration.
+/// On-device AI playlist generation via Apple Foundation Models (iOS 18.1+).
 ///
-/// Currently returns `FlutterMethodNotImplemented` for all calls so that
-/// the Flutter side falls through to Gemini. Replace this implementation
-/// with actual FoundationModels calls when targeting iOS 18.1+.
+/// Falls back to FlutterMethodNotImplemented when:
+/// - Device is below iOS 18.1
+/// - Apple Intelligence is not enabled or not available (e.g. simulator)
+/// Flutter side catches PlatformException and falls back to Gemini if a key is set,
+/// or surfaces an appropriate message to the user.
 @objc class AiMethodChannel: NSObject, FlutterPlugin {
     static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
@@ -17,7 +20,49 @@ import Foundation
     }
 
     func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        // Stub: return not-implemented so Flutter falls back to Gemini
-        result(FlutterMethodNotImplemented)
+        guard call.method == "generatePlaylist" else {
+            result(FlutterMethodNotImplemented)
+            return
+        }
+
+        let args = call.arguments as? [String: Any]
+        let prompt = args?["prompt"] as? String ?? ""
+        let songList = args?["songList"] as? String ?? ""
+
+        if #available(iOS 26.0, *) {
+            Task {
+                await self.generateOnDevice(prompt: prompt, songList: songList, result: result)
+            }
+        } else {
+            result(FlutterMethodNotImplemented)
+        }
+    }
+
+    @available(iOS 26.0, *)
+    private func generateOnDevice(
+        prompt: String,
+        songList: String,
+        result: @escaping FlutterResult
+    ) async {
+        do {
+            let session = LanguageModelSession()
+            let fullPrompt = """
+            You are a music curator. From the song list below, select up to 25 song IDs \
+            that best match the user's request. Return ONLY a valid JSON array of song ID \
+            strings. No other text.
+
+            Songs (id|title|artist|genre|duration_secs):
+            \(songList.isEmpty ? "(library unavailable)" : songList)
+
+            User request: "\(prompt)"
+
+            Response:
+            """
+            let response = try await session.respond(to: fullPrompt)
+            result(response.content)
+        } catch {
+            // Apple Intelligence unavailable, disabled, or simulator — let Flutter handle it
+            result(FlutterMethodNotImplemented)
+        }
     }
 }

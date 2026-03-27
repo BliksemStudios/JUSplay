@@ -70,10 +70,11 @@ Response format: ["id1","id2","id3"]''';
       return (songs: nativeResult, source: AiSource.onDevice);
     }
 
-    // Fall back to Gemini
+    // Fall back to Gemini if a key is configured
     if (geminiApiKey.isEmpty) {
       throw PlaylistGenerationException(
-        'No Gemini API key configured. Add one in Settings → AI Features.',
+        'On-device AI requires an iPhone 15 Pro or later with Apple Intelligence enabled.\n\n'
+        'To use cloud AI, add a Gemini API key in Settings → AI Features.',
       );
     }
 
@@ -134,9 +135,12 @@ Response format: ["id1","id2","id3"]''';
     List<Song> allSongs,
   ) async {
     try {
+      final songLines = allSongs.take(_maxSongLines).map((s) {
+        return '${s.id}|${s.title}|${s.artist ?? ''}|${s.genre ?? ''}|${s.duration}';
+      }).join('\n');
       final result = await _methodChannel.invokeMethod<String>(
         'generatePlaylist',
-        {'prompt': userRequest},
+        {'prompt': userRequest, 'songList': songLines},
       );
       if (result == null) return null;
       final ids = parseResponse(result);
@@ -145,7 +149,7 @@ Response format: ["id1","id2","id3"]''';
     } on MissingPluginException {
       return null; // channel not registered on Android
     } on PlatformException {
-      return null; // stub returns FlutterMethodNotImplemented
+      return null; // Foundation Models unavailable (simulator, unsupported device, or AI disabled)
     }
   }
 }
