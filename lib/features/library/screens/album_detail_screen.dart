@@ -93,7 +93,7 @@ class AlbumDetailScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      bottomNavigationBar: const MiniPlayer(),
+      bottomNavigationBar: const MiniPlayer(standalone: true),
       body: detailAsync.when(
         loading: () => _buildLoadingState(context),
         error: (error, stack) => CustomScrollView(
@@ -742,6 +742,31 @@ class _TrackTile extends ConsumerWidget {
                 onTap: () {
                   Navigator.pop(context);
                   _showAddToPlaylistSheet(context, ref, song);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.auto_awesome,
+                    color: colorScheme.onSurfaceVariant),
+                title: const Text('Create smart playlist'),
+                subtitle: Text(
+                  'Find similar songs using AI',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  final parts = <String>[
+                    'Songs similar to "${song.title}"',
+                    if (song.artist != null) 'by ${song.artist}',
+                    if (song.genre != null) '— ${song.genre} vibes',
+                  ];
+                  context.push(
+                    Uri(
+                      path: '/smart-playlist',
+                      queryParameters: {'prompt': parts.join(' ')},
+                    ).toString(),
+                  );
                 },
               ),
               ListTile(

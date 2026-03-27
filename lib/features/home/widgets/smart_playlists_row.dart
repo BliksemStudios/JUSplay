@@ -36,13 +36,15 @@ class SmartPlaylistsRow extends ConsumerWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: smartPlaylistPresets.length,
+            itemCount: smartPlaylistPresetCount,
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
-              final (label, prompt) = smartPlaylistPresets[i];
+              final label = smartPlaylistLabels[i];
               return ActionChip(
                 label: Text(label),
                 onPressed: () {
+                  // Pick a random prompt variation each time
+                  final prompt = randomPresetPrompt(i);
                   final encoded = Uri.encodeComponent(prompt);
                   context.push('/smart-playlist?prompt=$encoded');
                 },

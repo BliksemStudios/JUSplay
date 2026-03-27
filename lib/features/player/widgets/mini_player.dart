@@ -11,7 +11,11 @@ import '../../../core/audio/audio.dart';
 /// Tapping the art or song info navigates to `/now-playing`.
 /// Returns [SizedBox.shrink] when nothing is loaded.
 class MiniPlayer extends ConsumerWidget {
-  const MiniPlayer({super.key});
+  /// When true, the player is the only bottom element (no nav bar below it),
+  /// so it gets larger art, bigger text, and safe-area bottom padding.
+  final bool standalone;
+
+  const MiniPlayer({super.key, this.standalone = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,6 +35,13 @@ class MiniPlayer extends ConsumerWidget {
         ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
         : 0.0;
 
+    final artSize = standalone ? 56.0 : 44.0;
+    final titleSize = standalone ? 15.0 : 14.0;
+    final subtitleSize = standalone ? 13.0 : 12.0;
+    final bottomPad = standalone
+        ? MediaQuery.of(context).padding.bottom
+        : 0.0;
+
     return Material(
       color: colorScheme.surfaceContainer,
       child: Column(
@@ -44,17 +55,29 @@ class MiniPlayer extends ConsumerWidget {
           ),
           // Content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            padding: EdgeInsets.only(
+              left: standalone ? 12 : 4,
+              top: standalone ? 10 : 4,
+              bottom: (standalone ? 10 : 4) + bottomPad,
+            ),
             child: Row(
               children: [
+                // Close button — far left, away from playback controls
+                IconButton(
+                  onPressed: () => ref.read(audioHandlerProvider).stop(),
+                  icon: Icon(Icons.close, size: 18, color: colorScheme.onSurfaceVariant),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
                 // Art — tappable to open now-playing
                 GestureDetector(
                   onTap: () => context.push('/now-playing'),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(standalone ? 8 : 6),
                     child: SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: artSize,
+                      height: artSize,
                       child: artUri != null
                           ? CachedNetworkImage(
                               imageUrl: artUri.toString(),
@@ -67,7 +90,7 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
                 // Song info — tappable to open now-playing
                 Expanded(
@@ -82,9 +105,9 @@ class MiniPlayer extends ConsumerWidget {
                           mediaItem.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                            fontSize: titleSize,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -94,7 +117,7 @@ class MiniPlayer extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
-                            fontSize: 12,
+                            fontSize: subtitleSize,
                           ),
                         ),
                       ],
@@ -102,7 +125,7 @@ class MiniPlayer extends ConsumerWidget {
                   ),
                 ),
 
-                // Controls: prev | play-pause | next
+                // Controls: prev | play-pause | next | close
                 _ControlButton(
                   icon: Icons.skip_previous,
                   onPressed: () => ref.read(audioHandlerProvider).skipToPrevious(),

@@ -33,17 +33,23 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
   AiSource? _source;
   bool _loading = false;
   String? _error;
+  String _statusText = '';
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialPrompt);
+    // Don't auto-generate — let the user review/edit the prompt first.
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _setStatus(String text) {
+    if (mounted) setState(() => _statusText = text);
   }
 
   Future<void> _generate() async {
@@ -54,15 +60,19 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
       _loading = true;
       _error = null;
       _result = null;
+      _statusText = 'Loading your music library…';
     });
 
     try {
       final allSongs = await ref.read(_allSongsProvider.future);
+      _setStatus('Analysing your library…');
+
       final apiKey = ref.read(settingsStorageProvider).geminiApiKey;
       final generator = PlaylistGenerator(geminiApiKey: apiKey);
       final (:songs, :source) = await generator.generate(
         userRequest: prompt,
         allSongs: allSongs,
+        onStatus: _setStatus,
       );
       if (mounted) {
         setState(() {
@@ -88,6 +98,58 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
     }
   }
 
+  Future<void> _saveAsPlaylist(List<Song> songs) async {
+    final api = ref.read(subsonicApiProvider);
+    if (api == null) return;
+
+    final nameController = TextEditingController(
+      text: _controller.text.trim(),
+    );
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Save as Playlist'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Playlist name'),
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (v) => Navigator.of(dialogCtx).pop(v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogCtx).pop(nameController.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.isEmpty || !mounted) return;
+
+    try {
+      await api.createPlaylist(
+        name: name,
+        songIds: songs.map((s) => s.id).toList(),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saved "$name" with ${songs.length} songs')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: $e')),
+        );
+      }
+    }
+  }
+
   void _playAll(List<Song> songs) {
     if (songs.isEmpty) return;
     final api = ref.read(subsonicApiProvider);
@@ -107,7 +169,7 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Smart Playlist')),
-      bottomNavigationBar: const MiniPlayer(),
+      bottomNavigationBar: const MiniPlayer(standalone: true),
       body: Column(
         children: [
           // Input area
@@ -136,21 +198,21 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
           // Preset chips
           SizedBox(
             height: 40,
-            child: ListView(
+            child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: smartPlaylistPresets.map((p) {
+              itemCount: smartPlaylistPresetCount,
+              itemBuilder: (context, i) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
-                    label: Text(p.$1),
+                    label: Text(smartPlaylistLabels[i]),
                     onPressed: () {
-                      _controller.text = p.$2;
-                      _generate();
+                      _controller.text = randomPresetPrompt(i);
                     },
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
           const SizedBox(height: 8),
@@ -163,7 +225,39 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
 
   Widget _buildBody(ThemeData theme) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              size: 40,
+              color: theme.colorScheme.primary.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: 24),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: Text(
+                _statusText,
+                key: ValueKey(_statusText),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 160,
+              child: LinearProgressIndicator(
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+      );
     }
     if (_error != null) {
       return Center(
@@ -207,7 +301,13 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
                 '${songs.length} songs',
                 style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () => _saveAsPlaylist(songs),
+                icon: const Icon(Icons.save_alt),
+                tooltip: 'Save as playlist',
+              ),
+              const SizedBox(width: 4),
               FilledButton.icon(
                 onPressed: () => _playAll(songs),
                 icon: const Icon(Icons.play_arrow, size: 18),

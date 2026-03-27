@@ -81,8 +81,9 @@ Response format: ["id1","id2","id3"]''';
   Future<({List<Song> songs, AiSource source})> generate({
     required String userRequest,
     required List<Song> allSongs,
+    void Function(String status)? onStatus,
   }) async {
-    final nativeResult = await _tryNativeAi(userRequest, allSongs);
+    final nativeResult = await _tryNativeAi(userRequest, allSongs, onStatus);
     if (nativeResult != null && nativeResult.isNotEmpty) {
       return (songs: nativeResult, source: AiSource.onDevice);
     }
@@ -93,6 +94,7 @@ Response format: ["id1","id2","id3"]''';
       );
     }
 
+    onStatus?.call('Sending to Gemini…');
     return _generateWithGemini(userRequest, allSongs);
   }
 
@@ -103,9 +105,11 @@ Response format: ["id1","id2","id3"]''';
   Future<List<Song>?> _tryNativeAi(
     String userRequest,
     List<Song> allSongs,
+    void Function(String status)? onStatus,
   ) async {
     try {
       // Step 1: Get genres from the library
+      onStatus?.call('Matching genres to your vibe…');
       final genreSongs = <String, List<Song>>{};
       for (final s in allSongs) {
         final g = s.genre ?? 'Unknown';
@@ -128,6 +132,7 @@ Response format: ["id1","id2","id3"]''';
       print('[AI] Step 1 - matched genres: $matchedGenres');
 
       // Step 2: Filter songs by matched genres, with fallback
+      onStatus?.call('Filtering songs by genre…');
       List<Song> candidates;
       if (matchedGenres.isNotEmpty) {
         final matchedLower = matchedGenres.map((g) => g.toLowerCase()).toSet();
@@ -159,7 +164,9 @@ Response format: ["id1","id2","id3"]''';
 
       print('[AI] Step 2 - ${candidates.length} candidates in ${batches.length} batches');
 
+      onStatus?.call('Curating your playlist…');
       for (var b = 0; b < batches.length; b++) {
+        onStatus?.call('Evaluating songs… (${b + 1}/${batches.length})');
         final batch = batches[b];
         final songLines = <String>[];
         for (var i = 0; i < batch.length; i++) {

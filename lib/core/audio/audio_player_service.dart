@@ -262,6 +262,10 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> stop() async {
     await _player.stop();
+    mediaItem.add(null);
+    _queue.clear();
+    _mediaItems.clear();
+    _currentIndex = -1;
     await super.stop();
   }
 

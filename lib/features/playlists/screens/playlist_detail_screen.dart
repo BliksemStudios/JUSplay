@@ -142,7 +142,7 @@ class _PlaylistDetailScreenState extends ConsumerState<PlaylistDetailScreen> {
     final api = ref.watch(subsonicApiProvider);
 
     return Scaffold(
-      bottomNavigationBar: const MiniPlayer(),
+      bottomNavigationBar: const MiniPlayer(standalone: true),
       body: api == null
           ? _buildNotConnected(colorScheme)
           : _isLoading && _playlist == null

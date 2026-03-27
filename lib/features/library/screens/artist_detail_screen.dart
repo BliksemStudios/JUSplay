@@ -85,7 +85,7 @@ class ArtistDetailScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      bottomNavigationBar: const MiniPlayer(),
+      bottomNavigationBar: const MiniPlayer(standalone: true),
       body: detailAsync.when(
         loading: () => _buildLoadingState(context),
         error: (error, stack) => CustomScrollView(
