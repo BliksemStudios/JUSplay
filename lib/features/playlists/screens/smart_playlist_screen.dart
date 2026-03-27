@@ -3,21 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/playlist_generator.dart';
+import '../../../core/ai/playlist_presets.dart';
 import '../../../core/audio/audio.dart';
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
-
-// Preset chips
-const _presets = [
-  ('Workout 💪', 'high energy workout songs'),
-  ('Focus 🎯', 'instrumental focus music'),
-  ('Chill 😌', 'relaxing chill songs'),
-  ('Party 🎉', 'upbeat party anthems'),
-  ('Sad hours 🌧', 'melancholic emotional songs'),
-  ('Road trip 🚗', 'road trip driving songs'),
-  ('Sleep 🌙', 'calm sleep music'),
-  ('Morning coffee ☕', 'light acoustic morning songs'),
-];
 
 // Provider: all songs from library (for the AI to pick from)
 // Uses search3 with empty query and high songCount to get a broad list.
@@ -148,7 +137,7 @@ class _SmartPlaylistScreenState extends ConsumerState<SmartPlaylistScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _presets.map((p) {
+              children: smartPlaylistPresets.map((p) {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(

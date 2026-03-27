@@ -18,7 +18,7 @@ class JUSPlayApp extends ConsumerWidget {
       title: 'JUSPlay',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.forAccent(themeKey),
-      darkTheme: AppTheme.darkTheme,
+      darkTheme: AppTheme.forAccent(themeKey),
       themeMode: ThemeMode.dark,
       routerConfig: router,
       builder: (context, child) {
@@ -39,6 +39,8 @@ class _GlobalMiniPlayer extends ConsumerWidget {
   const _GlobalMiniPlayer();
 
   static const _hiddenRoutes = {'/login', '/now-playing', '/'};
+  static const _shellRoutes = {'/home', '/library', '/search', '/settings'};
+  static const _navBarHeight = 80.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +50,9 @@ class _GlobalMiniPlayer extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isShellRoute = _shellRoutes.any((r) => location.startsWith(r));
+    final bottomPadding = MediaQuery.of(context).padding.bottom +
+        (isShellRoute ? _navBarHeight : 0.0);
 
     return Positioned(
       left: 0,

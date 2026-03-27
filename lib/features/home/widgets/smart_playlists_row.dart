@@ -2,16 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-const _presets = [
-  ('Workout 💪', 'high energy workout songs'),
-  ('Focus 🎯', 'instrumental focus music'),
-  ('Chill 😌', 'relaxing chill songs'),
-  ('Party 🎉', 'upbeat party anthems'),
-  ('Sad hours 🌧', 'melancholic emotional songs'),
-  ('Road trip 🚗', 'road trip driving songs'),
-  ('Sleep 🌙', 'calm sleep music'),
-  ('Morning coffee ☕', 'light acoustic morning songs'),
-];
+import '../../../core/ai/playlist_presets.dart';
 
 /// Horizontal row of preset AI playlist chips shown at the top of HomeScreen.
 class SmartPlaylistsRow extends ConsumerWidget {
@@ -45,10 +36,10 @@ class SmartPlaylistsRow extends ConsumerWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _presets.length,
+            itemCount: smartPlaylistPresets.length,
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
-              final (label, prompt) = _presets[i];
+              final (label, prompt) = smartPlaylistPresets[i];
               return ActionChip(
                 label: Text(label),
                 onPressed: () {
