@@ -46,10 +46,14 @@ jobs:
       - name: Patch flutter_dynamic_icon for AGP 8+ and Flutter V2
         run: |
           PLUGIN_DIR="$HOME/.pub-cache/hosted/pub.dev/flutter_dynamic_icon-2.1.0/android"
+          # 1) Fix namespace for AGP 8+
+          BUILD="$PLUGIN_DIR/build.gradle"
+          if [ -f "$BUILD" ] && ! grep -q 'namespace' "$BUILD"; then
+            sed -i "s|android {|android {\n    namespace 'io.github.tastelessjolt.flutterdynamicicon'|" "$BUILD"
+          fi
+          # 2) Replace V1 embedding plugin with clean V2 implementation
           JAVA="$PLUGIN_DIR/src/main/java/io/github/tastelessjolt/flutterdynamicicon/FlutterDynamicIconPlugin.java"
-          # Replace V1 embedding plugin with clean V2 implementation
-          if [ -f "$JAVA" ]; then
-            cat > "$JAVA" << 'PATCH'
+          cat > "$JAVA" << 'PATCH'
           package io.github.tastelessjolt.flutterdynamicicon;
           import android.content.Context;
           import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -76,7 +80,6 @@ jobs:
             }
           }
           PATCH
-          fi
 
       - run: flutter build apk --debug
 
