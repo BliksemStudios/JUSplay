@@ -43,11 +43,17 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Patch legacy plugin namespace
+      - name: Patch flutter_dynamic_icon for AGP 8+ and Flutter V2
         run: |
-          PLUGIN="$HOME/.pub-cache/hosted/pub.dev/flutter_dynamic_icon-2.1.0/android/build.gradle"
-          if [ -f "$PLUGIN" ] && ! grep -q 'namespace' "$PLUGIN"; then
-            sed -i "s|android {|android {\n    namespace 'io.github.tastelessjolt.flutterdynamicicon'|" "$PLUGIN"
+          PLUGIN_DIR="$HOME/.pub-cache/hosted/pub.dev/flutter_dynamic_icon-2.1.0/android"
+          # Fix missing namespace (AGP 8+ requirement)
+          if [ -f "$PLUGIN_DIR/build.gradle" ] && ! grep -q 'namespace' "$PLUGIN_DIR/build.gradle"; then
+            sed -i "s|android {|android {\n    namespace 'io.github.tastelessjolt.flutterdynamicicon'|" "$PLUGIN_DIR/build.gradle"
+          fi
+          # Fix V1 embedding API (PluginRegistry.Registrar removed in Flutter 3.41+)
+          JAVA="$PLUGIN_DIR/src/main/java/io/github/tastelessjolt/flutterdynamicicon/FlutterDynamicIconPlugin.java"
+          if [ -f "$JAVA" ] && grep -q 'PluginRegistry.Registrar' "$JAVA"; then
+            sed -i 's/public static void registerWith(io.flutter.plugin.common.PluginRegistry.Registrar registrar)/public static void registerWith(@SuppressWarnings("unused") Object registrar)/' "$JAVA"
           fi
 
       - run: flutter build apk --debug
