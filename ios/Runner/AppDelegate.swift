@@ -12,5 +12,9 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // Register AI method channel stub
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AiMethodChannel") {
+      AiMethodChannel.register(with: registrar)
+    }
   }
 }
