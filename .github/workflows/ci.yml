@@ -42,6 +42,14 @@ jobs:
           channel: stable
 
       - run: flutter pub get
+
+      - name: Patch legacy plugin namespace
+        run: |
+          PLUGIN="$HOME/.pub-cache/hosted/pub.dev/flutter_dynamic_icon-2.1.0/android/build.gradle"
+          if [ -f "$PLUGIN" ] && ! grep -q 'namespace' "$PLUGIN"; then
+            sed -i "s|android {|android {\n    namespace 'io.github.tastelessjolt.flutterdynamicicon'|" "$PLUGIN"
+          fi
+
       - run: flutter build apk --debug
 
       - uses: actions/upload-artifact@v4
@@ -51,7 +59,7 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-latest
+    runs-on: macos-15
     needs: analyze
     steps:
       - uses: actions/checkout@v4

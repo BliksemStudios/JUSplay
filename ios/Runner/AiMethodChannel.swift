@@ -1,6 +1,8 @@
 import Flutter
 import Foundation
+#if canImport(FoundationModels)
 import FoundationModels
+#endif
 
 /// On-device AI via Apple Foundation Models (iOS 26+).
 /// Dart sends a natural language prompt, Swift relays it to the model
@@ -24,6 +26,7 @@ import FoundationModels
         let args = call.arguments as? [String: Any]
         let prompt = args?["prompt"] as? String ?? ""
 
+        #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             Task {
                 await self.generateOnDevice(prompt: prompt, result: result)
@@ -31,8 +34,12 @@ import FoundationModels
         } else {
             result(FlutterError(code: "UNAVAILABLE", message: "Requires iOS 26+", details: nil))
         }
+        #else
+        result(FlutterError(code: "UNAVAILABLE", message: "FoundationModels not available on this SDK", details: nil))
+        #endif
     }
 
+    #if canImport(FoundationModels)
     @available(iOS 26.0, *)
     private func generateOnDevice(
         prompt: String,
@@ -66,4 +73,5 @@ import FoundationModels
             ))
         }
     }
+    #endif
 }
