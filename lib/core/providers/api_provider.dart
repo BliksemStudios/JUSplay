@@ -93,3 +93,42 @@ final cacheManagerProvider = Provider<CacheManager>((ref) {
     'cacheManagerProvider must be overridden with an initialised instance.',
   );
 });
+
+// -----------------------------------------------------------------------------
+// Accent theme
+// -----------------------------------------------------------------------------
+
+/// Persists and exposes the currently selected accent theme key.
+class AccentThemeNotifier extends StateNotifier<String> {
+  AccentThemeNotifier(this._settings) : super(_settings.accentTheme);
+
+  final SettingsStorage _settings;
+
+  static const Map<String, String?> _iconNames = {
+    'goldAmber': null,        // primary icon — pass null to reset
+    'cyanTeal': 'icon_teal',
+    'coralOrange': 'icon_coral',
+    'oledWhite': 'icon_oled',
+  };
+
+  Future<void> setTheme(String key) async {
+    await _settings.setAccentTheme(key);
+    state = key;
+    // Switch iOS app icon — added later in Task 9; stub for now
+  }
+}
+
+/// Provides the active accent theme key (e.g. 'goldAmber').
+final accentThemeProvider =
+    StateNotifierProvider<AccentThemeNotifier, String>((ref) {
+  final settings = ref.watch(settingsStorageProvider);
+  return AccentThemeNotifier(settings);
+});
+
+// -----------------------------------------------------------------------------
+// Current router location (updated by router listener in Task 4)
+// -----------------------------------------------------------------------------
+
+/// Tracks the current GoRouter path so widgets outside the router tree
+/// (e.g. the global MiniPlayer overlay) can react to navigation.
+final currentLocationProvider = StateProvider<String>((ref) => '/');
