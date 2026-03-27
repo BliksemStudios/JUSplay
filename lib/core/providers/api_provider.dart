@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dynamic_icon/flutter_dynamic_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -122,7 +123,7 @@ class AccentThemeNotifier extends StateNotifier<String> {
         await FlutterDynamicIcon.setAlternateIconName(_iconNames[key]);
       }
     } catch (e) {
-      assert(false, 'Icon switch failed for key "$key": $e');
+      debugPrint('Icon switch failed for key "$key": $e');
     }
   }
 }
