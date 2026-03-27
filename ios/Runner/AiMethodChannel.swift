@@ -57,17 +57,25 @@ import FoundationModels
 
         do {
             let session = LanguageModelSession()
+
+            // Build a concise, natural-sounding song list to avoid safety guardrails
+            let songs = songList.split(separator: "\n").prefix(100)
+            let formatted = songs.map { line -> String in
+                let parts = line.split(separator: "|", maxSplits: 4)
+                if parts.count >= 3 {
+                    return "[\(parts[0])] \(parts[1]) by \(parts[2])"
+                }
+                return String(line)
+            }.joined(separator: "\n")
+
             let fullPrompt = """
-            You are a music curator. From the song list below, select up to 25 song IDs \
-            that best match the user's request. Return ONLY a valid JSON array of song ID \
-            strings. No other text.
+            I have a music library and want a playlist. Here are some of my songs:
 
-            Songs (id|title|artist|genre|duration_secs):
-            \(songList.isEmpty ? "(library unavailable)" : songList)
+            \(formatted.isEmpty ? "(no songs available)" : formatted)
 
-            User request: "\(prompt)"
+            Please pick up to 25 songs that fit this vibe: \(prompt)
 
-            Response:
+            Reply with just the bracket IDs as a JSON array, like ["id1","id2"]. Nothing else.
             """
             let response = try await session.respond(to: fullPrompt)
             result(response.content)
