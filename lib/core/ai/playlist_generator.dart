@@ -73,8 +73,7 @@ Response format: ["id1","id2","id3"]''';
     // Fall back to Gemini if a key is configured
     if (geminiApiKey.isEmpty) {
       throw PlaylistGenerationException(
-        'On-device AI requires an iPhone 15 Pro or later with Apple Intelligence enabled.\n\n'
-        'To use cloud AI, add a Gemini API key in Settings → AI Features.',
+        'No AI available. Add a Gemini API key in Settings → AI Features.',
       );
     }
 
@@ -148,8 +147,11 @@ Response format: ["id1","id2","id3"]''';
       return ids.map((id) => songMap[id]).whereType<Song>().toList();
     } on MissingPluginException {
       return null; // channel not registered on Android
-    } on PlatformException {
-      return null; // Foundation Models unavailable (simulator, unsupported device, or AI disabled)
+    } on PlatformException catch (e) {
+      // Surface the real error from Swift so the user knows what's happening
+      throw PlaylistGenerationException(
+        'On-device AI error: ${e.message ?? e.code}',
+      );
     }
   }
 }

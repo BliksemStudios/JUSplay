@@ -2,13 +2,7 @@ import Flutter
 import Foundation
 import FoundationModels
 
-/// On-device AI playlist generation via Apple Foundation Models (iOS 18.1+).
-///
-/// Falls back to FlutterMethodNotImplemented when:
-/// - Device is below iOS 18.1
-/// - Apple Intelligence is not enabled or not available (e.g. simulator)
-/// Flutter side catches PlatformException and falls back to Gemini if a key is set,
-/// or surfaces an appropriate message to the user.
+/// On-device AI playlist generation via Apple Foundation Models (iOS 26+).
 @objc class AiMethodChannel: NSObject, FlutterPlugin {
     static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
@@ -34,7 +28,7 @@ import FoundationModels
                 await self.generateOnDevice(prompt: prompt, songList: songList, result: result)
             }
         } else {
-            result(FlutterMethodNotImplemented)
+            result(FlutterError(code: "UNAVAILABLE", message: "Requires iOS 26+", details: nil))
         }
     }
 
@@ -44,6 +38,23 @@ import FoundationModels
         songList: String,
         result: @escaping FlutterResult
     ) async {
+        // Check model availability before attempting generation
+        let model = SystemLanguageModel.default
+        switch model.availability {
+        case .available:
+            break
+        case .unavailable(let reason):
+            result(FlutterError(
+                code: "UNAVAILABLE",
+                message: "Apple Intelligence unavailable: \(reason)",
+                details: nil
+            ))
+            return
+        @unknown default:
+            result(FlutterError(code: "UNAVAILABLE", message: "Apple Intelligence status unknown", details: nil))
+            return
+        }
+
         do {
             let session = LanguageModelSession()
             let fullPrompt = """
@@ -61,8 +72,11 @@ import FoundationModels
             let response = try await session.respond(to: fullPrompt)
             result(response.content)
         } catch {
-            // Apple Intelligence unavailable, disabled, or simulator — let Flutter handle it
-            result(FlutterMethodNotImplemented)
+            result(FlutterError(
+                code: "GENERATION_FAILED",
+                message: "Foundation Models error: \(error.localizedDescription)",
+                details: "\(error)"
+            ))
         }
     }
 }
