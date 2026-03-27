@@ -1,3 +1,4 @@
+import 'package:flutter_dynamic_icon/flutter_dynamic_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api.dart';
@@ -114,7 +115,15 @@ class AccentThemeNotifier extends StateNotifier<String> {
   Future<void> setTheme(String key) async {
     await _settings.setAccentTheme(key);
     state = key;
-    // Switch iOS app icon — added later in Task 9; stub for now
+    // Switch iOS app icon (no-op on Android)
+    try {
+      final supported = await FlutterDynamicIcon.supportsAlternateIcons;
+      if (supported) {
+        await FlutterDynamicIcon.setAlternateIconName(_iconNames[key]);
+      }
+    } catch (_) {
+      // Icon switching is a nice-to-have — swallow errors silently
+    }
   }
 }
 
