@@ -20,8 +20,8 @@ void main() {
           const Song(id: 'id1', title: 'Song 1', duration: 180),
         ];
 
-        expect(
-          () => generator.generate(userRequest: 'chill', allSongs: songs),
+        await expectLater(
+          generator.generate(userRequest: 'chill', allSongs: songs),
           throwsA(isA<PlaylistGenerationException>()),
         );
       });
@@ -109,6 +109,11 @@ void main() {
       test('handles JSON with surrounding whitespace', () {
         final ids = PlaylistGenerator.parseResponse('  ["a","b"]  ');
         expect(ids, ['a', 'b']);
+      });
+
+      test('filters non-string elements from mixed array', () {
+        final ids = PlaylistGenerator.parseResponse('[1,"id2",null]');
+        expect(ids, ['id2']);
       });
     });
   });

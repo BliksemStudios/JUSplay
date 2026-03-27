@@ -18,6 +18,9 @@ class PlaylistGenerator {
   static const _methodChannel =
       MethodChannel('com.bliksemstudios.jusplay/ai');
 
+  static const int _maxSongLines = 500;
+  static const int _maxArtists = 100;
+
   /// Builds the prompt string sent to the AI model.
   ///
   /// Exposed as a static method so it can be unit-tested without a live API key.
@@ -47,7 +50,7 @@ Response format: ["id1","id2","id3"]''';
       final trimmed = response.trim();
       final decoded = jsonDecode(trimmed);
       if (decoded is List) {
-        return decoded.cast<String>();
+        return decoded.whereType<String>().toList();
       }
     } catch (_) {}
     return [];
@@ -83,9 +86,9 @@ Response format: ["id1","id2","id3"]''';
         .map((s) => s.artist)
         .whereType<String>()
         .toSet()
-        .take(100)
+        .take(_maxArtists)
         .toList();
-    final songLines = allSongs.take(500).map((s) {
+    final songLines = allSongs.take(_maxSongLines).map((s) {
       return '${s.id}|${s.title}|${s.artist ?? ''}|${s.genre ?? ''}|${s.duration}';
     }).toList();
 
@@ -102,7 +105,12 @@ Response format: ["id1","id2","id3"]''';
     );
 
     final content = [Content.text(prompt)];
-    final response = await model.generateContent(content);
+    final GenerateContentResponse response;
+    try {
+      response = await model.generateContent(content);
+    } catch (e) {
+      throw PlaylistGenerationException('Gemini request failed: $e');
+    }
     final text = response.text ?? '';
 
     final ids = parseResponse(text);
