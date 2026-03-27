@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/models/models.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/storage/settings_storage.dart';
+import '../../../core/theme/app_theme.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -207,6 +209,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onSelected: (value) => settings.setThemeMode(value),
             ),
           ),
+          const _AccentThemePicker(),
+          const Divider(),
+
+          // -----------------------------------------------------------------
+          // AI Features section
+          // -----------------------------------------------------------------
+          _SectionHeader(title: 'AI Features', colorScheme: colorScheme),
+          _GeminiApiKeyField(settings: settings),
           const Divider(),
 
           // -----------------------------------------------------------------
@@ -401,6 +411,135 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       onSelected(selected);
       setState(() {});
     }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Accent theme picker widget
+// -----------------------------------------------------------------------------
+
+class _AccentThemePicker extends ConsumerWidget {
+  const _AccentThemePicker();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentKey = ref.watch(accentThemeProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Row(
+        children: AppTheme.themeConfigs.entries.map((entry) {
+          final isSelected = entry.key == currentKey;
+          final color = entry.value.accent;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () =>
+                  ref.read(accentThemeProvider.notifier).setTheme(entry.key),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(
+                              color: colorScheme.onSurface,
+                              width: 3,
+                            )
+                          : Border.all(
+                              color: colorScheme.outlineVariant,
+                              width: 1,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    // Short label: last word of display name (e.g. "Amber", "Teal")
+                    entry.value.displayName.split(' ').last,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Gemini API key field widget
+// -----------------------------------------------------------------------------
+
+class _GeminiApiKeyField extends StatefulWidget {
+  const _GeminiApiKeyField({required this.settings});
+  final SettingsStorage settings;
+
+  @override
+  State<_GeminiApiKeyField> createState() => _GeminiApiKeyFieldState();
+}
+
+class _GeminiApiKeyFieldState extends State<_GeminiApiKeyField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.settings.geminiApiKey);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: TextField(
+            obscureText: true,
+            controller: _controller,
+            decoration: const InputDecoration(
+              labelText: 'Gemini API Key',
+              hintText: 'Paste your Gemini API key here',
+              prefixIcon: Icon(Icons.vpn_key_outlined),
+            ),
+            onChanged: (value) => widget.settings.setGeminiApiKey(value),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          child: Text(
+            'Used to generate smart playlists when on-device AI is unavailable.',
+            style: TextStyle(
+              fontSize: 12,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
