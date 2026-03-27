@@ -9,10 +9,10 @@ import '../features/search/screens/search_screen.dart';
 import '../features/playlists/screens/playlists_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../features/player/screens/now_playing_screen.dart';
-import '../features/player/widgets/mini_player.dart';
 import '../features/library/screens/artist_detail_screen.dart';
 import '../features/library/screens/album_detail_screen.dart';
 import '../features/playlists/screens/playlist_detail_screen.dart';
+import '../features/playlists/screens/smart_playlist_screen.dart';
 import 'providers/providers.dart';
 
 /// Derives authentication state from the active server.
@@ -25,7 +25,7 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 final routerProvider = Provider<GoRouter>((ref) {
   final isAuthenticated = ref.watch(isAuthenticatedProvider);
 
-  return GoRouter(
+  final goRouter = GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
       final isLoginRoute = state.matchedLocation == '/login';
@@ -120,6 +120,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/smart-playlist',
+        name: 'smart-playlist',
+        builder: (context, state) {
+          final prompt = state.uri.queryParameters['prompt'] ?? '';
+          return SmartPlaylistScreen(initialPrompt: prompt);
+        },
+      ),
+      GoRoute(
         path: '/now-playing',
         name: 'now-playing',
         pageBuilder: (context, state) => CustomTransitionPage(
@@ -144,6 +152,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Update currentLocationProvider whenever the route changes so widgets
+  // outside the router tree (global MiniPlayer overlay) can react.
+  goRouter.routeInformationProvider.addListener(() {
+    final path = goRouter.routeInformationProvider.value.uri.path;
+    ref.read(currentLocationProvider.notifier).state = path;
+  });
+
+  return goRouter;
 });
 
 class ScaffoldWithNavBar extends StatelessWidget {
@@ -175,12 +192,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
     final currentIndex = _currentIndex(context);
 
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(child: child),
-          const MiniPlayer(),
-        ],
-      ),
+      body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {
