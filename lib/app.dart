@@ -13,6 +13,9 @@ class JUSPlayApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final themeKey = ref.watch(accentThemeProvider);
 
+    // Eagerly initialise the CarPlay bridge (iOS only, no-op otherwise).
+    ref.watch(carplayServiceProvider);
+
     return MaterialApp.router(
       title: 'JUSPlay',
       debugShowCheckedModeBanner: false,

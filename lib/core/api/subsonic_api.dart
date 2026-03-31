@@ -149,6 +149,20 @@ class SubsonicApi {
     return Album.fromJson(data['album'] as Map<String, dynamic>);
   }
 
+  /// Returns the songs for a given album.
+  Future<List<Song>> getAlbumSongs(String albumId) async {
+    final data = await _get('getAlbum.view', queryParameters: {'id': albumId});
+    final songList = data['album']?['song'] as List<dynamic>? ?? [];
+    return songList.map((s) => Song.fromJson(s as Map<String, dynamic>)).toList();
+  }
+
+  /// Returns the albums for a given artist.
+  Future<List<Album>> getArtistAlbums(String artistId) async {
+    final data = await _get('getArtist.view', queryParameters: {'id': artistId});
+    final albumList = data['artist']?['album'] as List<dynamic>? ?? [];
+    return albumList.map((a) => Album.fromJson(a as Map<String, dynamic>)).toList();
+  }
+
   /// Returns details for a single song.
   Future<Song> getSong(String id) async {
     final data = await _get('getSong.view', queryParameters: {'id': id});

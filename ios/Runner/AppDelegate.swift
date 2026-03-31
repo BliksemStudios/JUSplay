@@ -3,6 +3,9 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  /// The binary messenger from the Flutter engine, exposed for CarPlay.
+  private(set) var binaryMessenger: FlutterBinaryMessenger?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -12,7 +15,13 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    // Register AI method channel stub
+
+    // Capture the binary messenger for CarPlay method channel
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "CarPlayBridge") {
+      binaryMessenger = registrar.messenger()
+    }
+
+    // Register AI method channel
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AiMethodChannel") {
       AiMethodChannel.register(with: registrar)
     }

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		090414E7B46CBCF8D1260D5B /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */; };
+		13CA56C79078F7C86134C67B /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632855D5B4CE777F7C397BA2 /* CarPlaySceneDelegate.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
@@ -60,6 +61,7 @@
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		632855D5B4CE777F7C397BA2 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 		6A9479AB7627755997A3976D /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		6D7F285960B131ED478FF87F /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA1234560000000000000000 /* AiMethodChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiMethodChannel.swift; sourceTree = "<group>"; };
+		B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0000000000000000000010 /* icon_cyan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_cyan.png; sourceTree = "<group>"; };
 		BB0000000000000000000011 /* icon_coral.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_coral.png; sourceTree = "<group>"; };
 		BB0000000000000000000012 /* icon_oled.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_oled.png; sourceTree = "<group>"; };
@@ -86,7 +89,7 @@
 		BB0000000000000000000016 /* icon_coral@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_coral@3x.png"; sourceTree = "<group>"; };
 		BB0000000000000000000017 /* icon_oled@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_oled@2x.png"; sourceTree = "<group>"; };
 		BB0000000000000000000018 /* icon_oled@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_oled@3x.png"; sourceTree = "<group>"; };
-		B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D25F7E135F173D7945994A3A /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -180,6 +183,8 @@
 				BB0000000000000000000012 /* icon_oled.png */,
 				BB0000000000000000000017 /* icon_oled@2x.png */,
 				BB0000000000000000000018 /* icon_oled@3x.png */,
+				632855D5B4CE777F7C397BA2 /* CarPlaySceneDelegate.swift */,
+				D25F7E135F173D7945994A3A /* Runner.entitlements */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -422,6 +427,7 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				AA1234560000000000000001 /* AiMethodChannel.swift in Sources */,
+				13CA56C79078F7C86134C67B /* CarPlaySceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -513,6 +519,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = L65PS759KK;
 				ENABLE_BITCODE = NO;
@@ -696,6 +703,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = L65PS759KK;
 				ENABLE_BITCODE = NO;
@@ -719,6 +727,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = L65PS759KK;
 				ENABLE_BITCODE = NO;

@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter_dynamic_icon/flutter_dynamic_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api.dart';
+import '../audio/audio_provider.dart';
 import '../cache/cache.dart';
+import '../carplay/carplay_service.dart';
 import '../models/models.dart';
 import '../storage/storage.dart';
 
@@ -80,6 +84,23 @@ final subsonicApiProvider = Provider<SubsonicApi?>((ref) {
   final server = ref.watch(activeServerProvider);
   if (server == null) return null;
   return SubsonicApi(server);
+});
+
+// -----------------------------------------------------------------------------
+// CarPlay (iOS only)
+// -----------------------------------------------------------------------------
+
+/// Initialises the CarPlay method channel bridge when a server is active.
+///
+/// Automatically disposes the previous instance when the server changes.
+final carplayServiceProvider = Provider<CarPlayService?>((ref) {
+  if (!Platform.isIOS) return null;
+  final api = ref.watch(subsonicApiProvider);
+  final handler = ref.watch(audioHandlerProvider);
+  if (api == null) return null;
+  final service = CarPlayService(api: api, audioHandler: handler);
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 // -----------------------------------------------------------------------------
