@@ -80,7 +80,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.add),
             title: const Text('Add server'),
-            onTap: () => context.go('/login'),
+            onTap: () => context.push('/login?addServer=true'),
           ),
           const Divider(),
 

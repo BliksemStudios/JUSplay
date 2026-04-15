@@ -36,7 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isLoginRoute ? null : '/login';
       }
 
-      if (isLoginRoute) {
+      if (isLoginRoute && state.uri.queryParameters['addServer'] != 'true') {
         return '/home';
       }
 
