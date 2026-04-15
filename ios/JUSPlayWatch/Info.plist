@@ -30,7 +30,7 @@
 	</array>
 	<key>WKBackgroundModes</key>
 	<array>
-		<string>audio</string>
+		<string>self-care</string>
 	</array>
 </dict>
 </plist>
