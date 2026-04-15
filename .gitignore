@@ -3,6 +3,8 @@ CLAUDE.md
 .claude/
 .qodo/
 .history/
+.superpowers/
+flutter_*.log
 
 # Flutter/Dart
 .dart_tool/

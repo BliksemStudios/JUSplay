@@ -516,11 +516,47 @@ class _SongList extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final api = ref.watch(subsonicApiProvider);
 
+    // +1 for the Shuffle All header row
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: songs.length,
+      itemCount: songs.length + 1,
       itemBuilder: (context, index) {
-        final song = songs[index];
+        // Shuffle All button as first item
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: FilledButton.tonal(
+              onPressed: () {
+                final handler = ref.read(audioHandlerProvider);
+                if (api == null) return;
+                final shuffled = List<Song>.of(songs)..shuffle();
+                handler.playQueue(
+                  shuffled,
+                  startIndex: 0,
+                  getStreamUrl: (id) => api.streamUrl(id),
+                  getCoverArtUrl: (id) => api.coverArtUrl(id),
+                );
+                ScaffoldMessenger.of(context)
+                  ..clearSnackBars()
+                  ..showSnackBar(SnackBar(
+                    content: Text('Shuffling ${songs.length} songs'),
+                    duration: const Duration(seconds: 1),
+                    behavior: SnackBarBehavior.floating,
+                  ));
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.shuffle, size: 18, color: colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text('Shuffle All (${songs.length})'),
+                ],
+              ),
+            ),
+          );
+        }
+        final songIndex = index - 1;
+        final song = songs[songIndex];
         final artUrl = api?.coverArtUrl(song.coverArtId, size: 80) ?? '';
         return ListTile(
           leading: ClipRRect(
@@ -568,7 +604,7 @@ class _SongList extends ConsumerWidget {
             if (api == null) return;
             handler.playQueue(
               songs,
-              startIndex: index,
+              startIndex: songIndex,
               getStreamUrl: (id) => api.streamUrl(id),
               getCoverArtUrl: (id) => api.coverArtUrl(id),
             );

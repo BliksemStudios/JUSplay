@@ -10,15 +10,25 @@
 		090414E7B46CBCF8D1260D5B /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */; };
 		13CA56C79078F7C86134C67B /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632855D5B4CE777F7C397BA2 /* CarPlaySceneDelegate.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		28C680C52541A738AAB0A72D /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60EE2744F7872C27C255D7F8 /* WatchSessionManager.swift */; };
+		2D882EB27CDD63B521D7492F /* SubsonicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E78E549516F3A3A9ACEE2C7 /* SubsonicService.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
+		3AF163CD56BC54E0FE9F573B /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05E46408FFC5470E50D20991 /* AudioManager.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		5C7F2170EFC9FCCC3F908BD1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29EB77B8020BF38D31A001A8 /* ContentView.swift */; };
 		5D5D50582324C515CF34A6DE /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CA4AAFE569E7F3B14E6A648 /* Pods_Runner.framework */; };
+		5D7930FEE794E0B62B17F9EC /* BrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3183E77822A0D66F87CA1879 /* BrowseView.swift */; };
+		6A5B42CCC987B86739FF4A20 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17C04E86668386A03E999B1 /* AppState.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
+		7A363CF3C7B221CA38DAD2A5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B30CF71A1CBF961CAFABF8AF /* Assets.xcassets */; };
+		9533DEE9F8B7CFA0B02EF5C4 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83E2610494E0C2501CDECA5 /* WatchConnectivityManager.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		AA1234560000000000000001 /* AiMethodChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1234560000000000000000 /* AiMethodChannel.swift */; };
+		B27B2330DA1B29AACA72EDD9 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6969891C4CD34020BE8D91 /* NowPlayingView.swift */; };
+		B37D7D597CD1F98C33B9489E /* JUSPlayWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E77473D2CAA11CDFA707D47 /* JUSPlayWatchApp.swift */; };
 		BB0000000000000000000001 /* icon_cyan.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000010 /* icon_cyan.png */; };
 		BB0000000000000000000002 /* icon_coral.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000011 /* icon_coral.png */; };
 		BB0000000000000000000003 /* icon_oled.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000012 /* icon_oled.png */; };
@@ -28,6 +38,9 @@
 		BB0000000000000000000007 /* icon_coral@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000016 /* icon_coral@3x.png */; };
 		BB0000000000000000000008 /* icon_oled@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000017 /* icon_oled@2x.png */; };
 		BB0000000000000000000009 /* icon_oled@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0000000000000000000018 /* icon_oled@3x.png */; };
+		C8017B054BE088ED69099144 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04C3F95C2E20B01C11B2821B /* WatchConnectivity.framework */; };
+		CA118034D9B1E8294D00B1BF /* JUSPlayWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 68CC651E7BAA5C276A4224C6 /* JUSPlayWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E7E46D3FA73C3CE275E0225D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AB3AD6FC0A960C338E14AEC /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +50,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
+		};
+		63DBD4DABB7CAA0D186A1E78 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 42148A10771DC95A536C8145;
+			remoteInfo = JUSPlayWatch;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -51,17 +71,38 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A3D328EEF8782CA22175238C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				CA118034D9B1E8294D00B1BF /* JUSPlayWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		04C3F95C2E20B01C11B2821B /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
+		05E46408FFC5470E50D20991 /* AudioManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
+		0AB3AD6FC0A960C338E14AEC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		176F2BE49E641895FCDC7E4D /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		27DDB3D55472B1BEE0166F58 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		29EB77B8020BF38D31A001A8 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3183E77822A0D66F87CA1879 /* BrowseView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BrowseView.swift; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		4E77473D2CAA11CDFA707D47 /* JUSPlayWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JUSPlayWatchApp.swift; sourceTree = "<group>"; };
+		5A6969891C4CD34020BE8D91 /* NowPlayingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		5E78E549516F3A3A9ACEE2C7 /* SubsonicService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubsonicService.swift; sourceTree = "<group>"; };
+		60EE2744F7872C27C255D7F8 /* WatchSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		632855D5B4CE777F7C397BA2 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
+		68CC651E7BAA5C276A4224C6 /* JUSPlayWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JUSPlayWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A9479AB7627755997A3976D /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		6D7F285960B131ED478FF87F /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -69,6 +110,7 @@
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		7CBF36A71F10DFD19F728450 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		8230ABB4F02194B21E1D86AA /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		85BB35A645DC77EBE1125D83 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		8CA4AAFE569E7F3B14E6A648 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -78,7 +120,9 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A17C04E86668386A03E999B1 /* AppState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AA1234560000000000000000 /* AiMethodChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiMethodChannel.swift; sourceTree = "<group>"; };
+		B30CF71A1CBF961CAFABF8AF /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0000000000000000000010 /* icon_cyan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_cyan.png; sourceTree = "<group>"; };
 		BB0000000000000000000011 /* icon_coral.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_coral.png; sourceTree = "<group>"; };
@@ -89,6 +133,7 @@
 		BB0000000000000000000016 /* icon_coral@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_coral@3x.png"; sourceTree = "<group>"; };
 		BB0000000000000000000017 /* icon_oled@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_oled@2x.png"; sourceTree = "<group>"; };
 		BB0000000000000000000018 /* icon_oled@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_oled@3x.png"; sourceTree = "<group>"; };
+		C83E2610494E0C2501CDECA5 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
 		D25F7E135F173D7945994A3A /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -98,6 +143,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5D5D50582324C515CF34A6DE /* Pods_Runner.framework in Frameworks */,
+				C8017B054BE088ED69099144 /* WatchConnectivity.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +152,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				090414E7B46CBCF8D1260D5B /* Pods_RunnerTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D4368142B9FEE3455CA2B71A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E7E46D3FA73C3CE275E0225D /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +179,8 @@
 			children = (
 				8CA4AAFE569E7F3B14E6A648 /* Pods_Runner.framework */,
 				B885D24C1F97069D73AE4B31 /* Pods_RunnerTests.framework */,
+				EA7CFD0ABF840BBA0C725C19 /* watchOS */,
+				04C3F95C2E20B01C11B2821B /* WatchConnectivity.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -149,6 +205,7 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				C12BF2BE7F02F2BF7C00F903 /* Pods */,
 				639951F20A7CAE5EABF3987A /* Frameworks */,
+				B54C8C0F1A05D61FB13E0DFC /* JUSPlayWatch */,
 			);
 			sourceTree = "<group>";
 		};
@@ -157,6 +214,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				68CC651E7BAA5C276A4224C6 /* JUSPlayWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -185,8 +243,26 @@
 				BB0000000000000000000018 /* icon_oled@3x.png */,
 				632855D5B4CE777F7C397BA2 /* CarPlaySceneDelegate.swift */,
 				D25F7E135F173D7945994A3A /* Runner.entitlements */,
+				60EE2744F7872C27C255D7F8 /* WatchSessionManager.swift */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		B54C8C0F1A05D61FB13E0DFC /* JUSPlayWatch */ = {
+			isa = PBXGroup;
+			children = (
+				4E77473D2CAA11CDFA707D47 /* JUSPlayWatchApp.swift */,
+				29EB77B8020BF38D31A001A8 /* ContentView.swift */,
+				5A6969891C4CD34020BE8D91 /* NowPlayingView.swift */,
+				3183E77822A0D66F87CA1879 /* BrowseView.swift */,
+				C83E2610494E0C2501CDECA5 /* WatchConnectivityManager.swift */,
+				B30CF71A1CBF961CAFABF8AF /* Assets.xcassets */,
+				8230ABB4F02194B21E1D86AA /* Info.plist */,
+				5E78E549516F3A3A9ACEE2C7 /* SubsonicService.swift */,
+				05E46408FFC5470E50D20991 /* AudioManager.swift */,
+				A17C04E86668386A03E999B1 /* AppState.swift */,
+			);
+			path = JUSPlayWatch;
 			sourceTree = "<group>";
 		};
 		C12BF2BE7F02F2BF7C00F903 /* Pods */ = {
@@ -200,6 +276,14 @@
 				85BB35A645DC77EBE1125D83 /* Pods-RunnerTests.profile.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		EA7CFD0ABF840BBA0C725C19 /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				0AB3AD6FC0A960C338E14AEC /* Foundation.framework */,
+			);
+			name = watchOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -224,6 +308,23 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		42148A10771DC95A536C8145 /* JUSPlayWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B2C11926D2A574ABC840721F /* Build configuration list for PBXNativeTarget "JUSPlayWatch" */;
+			buildPhases = (
+				E390B2918D8A8420C49D49FB /* Sources */,
+				D4368142B9FEE3455CA2B71A /* Frameworks */,
+				C3BCBE0632FDE33E86518899 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JUSPlayWatch;
+			productName = JUSPlayWatch;
+			productReference = 68CC651E7BAA5C276A4224C6 /* JUSPlayWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -233,6 +334,7 @@
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
+				A3D328EEF8782CA22175238C /* Embed Watch Content */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				82D4A4BD3779A36A64C98F34 /* [CP] Embed Pods Frameworks */,
@@ -240,6 +342,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				F6260EC925C83C8C517C7F06 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -281,6 +384,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				42148A10771DC95A536C8145 /* JUSPlayWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -310,6 +414,14 @@
 				BB0000000000000000000003 /* icon_oled.png in Resources */,
 				BB0000000000000000000008 /* icon_oled@2x.png in Resources */,
 				BB0000000000000000000009 /* icon_oled@3x.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3BCBE0632FDE33E86518899 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A363CF3C7B221CA38DAD2A5 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -428,6 +540,22 @@
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				AA1234560000000000000001 /* AiMethodChannel.swift in Sources */,
 				13CA56C79078F7C86134C67B /* CarPlaySceneDelegate.swift in Sources */,
+				28C680C52541A738AAB0A72D /* WatchSessionManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E390B2918D8A8420C49D49FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B37D7D597CD1F98C33B9489E /* JUSPlayWatchApp.swift in Sources */,
+				5C7F2170EFC9FCCC3F908BD1 /* ContentView.swift in Sources */,
+				B27B2330DA1B29AACA72EDD9 /* NowPlayingView.swift in Sources */,
+				5D7930FEE794E0B62B17F9EC /* BrowseView.swift in Sources */,
+				9533DEE9F8B7CFA0B02EF5C4 /* WatchConnectivityManager.swift in Sources */,
+				2D882EB27CDD63B521D7492F /* SubsonicService.swift in Sources */,
+				3AF163CD56BC54E0FE9F573B /* AudioManager.swift in Sources */,
+				6A5B42CCC987B86739FF4A20 /* AppState.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -438,6 +566,12 @@
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		F6260EC925C83C8C517C7F06 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = JUSPlayWatch;
+			target = 42148A10771DC95A536C8145 /* JUSPlayWatch */;
+			targetProxy = 63DBD4DABB7CAA0D186A1E78 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -744,6 +878,96 @@
 			};
 			name = Release;
 		};
+		A5F7CF15418D4BB10424D81F /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L65PS759KK;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JUSPlayWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bliksemstudios.jusplay.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Profile;
+		};
+		D6FCD0221E4C11B9B01DFCC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L65PS759KK;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JUSPlayWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bliksemstudios.jusplay.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		F1440D9D46966ADC1A976AE8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L65PS759KK;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JUSPlayWatch/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bliksemstudios.jusplay.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -773,6 +997,16 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B2C11926D2A574ABC840721F /* Build configuration list for PBXNativeTarget "JUSPlayWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D6FCD0221E4C11B9B01DFCC2 /* Release */,
+				F1440D9D46966ADC1A976AE8 /* Debug */,
+				A5F7CF15418D4BB10424D81F /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

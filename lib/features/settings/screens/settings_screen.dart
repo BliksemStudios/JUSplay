@@ -250,6 +250,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 32),
+          Center(
+            child: Text(
+              'v0.1.0 (build 3)',
+              style: TextStyle(
+                fontSize: 11,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );

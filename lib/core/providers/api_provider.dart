@@ -7,6 +7,7 @@ import '../api/api.dart';
 import '../audio/audio_provider.dart';
 import '../cache/cache.dart';
 import '../carplay/carplay_service.dart';
+import '../watch/watch_service.dart';
 import '../models/models.dart';
 import '../storage/storage.dart';
 
@@ -99,6 +100,24 @@ final carplayServiceProvider = Provider<CarPlayService?>((ref) {
   final handler = ref.watch(audioHandlerProvider);
   if (api == null) return null;
   final service = CarPlayService(api: api, audioHandler: handler);
+  ref.onDispose(service.dispose);
+  return service;
+});
+
+// -----------------------------------------------------------------------------
+// WatchOS (iOS only)
+// -----------------------------------------------------------------------------
+
+/// Initialises the Watch method channel bridge when a server is active.
+///
+/// Automatically disposes the previous instance when the server changes.
+final watchServiceProvider = Provider<WatchService?>((ref) {
+  if (!Platform.isIOS) return null;
+  final server = ref.watch(activeServerProvider);
+  final api = ref.watch(subsonicApiProvider);
+  final handler = ref.watch(audioHandlerProvider);
+  if (api == null || server == null) return null;
+  final service = WatchService(api: api, audioHandler: handler, server: server);
   ref.onDispose(service.dispose);
   return service;
 });

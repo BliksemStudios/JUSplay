@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/song.dart';
 
@@ -35,6 +37,11 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   /// The current playback index in the queue.
   int get currentIndex => _currentIndex;
 
+  /// Callbacks for resolving stream/cover URLs — needed for queue restoration.
+  /// Set by the caller when playQueue() is invoked.
+  String Function(String songId)? _getStreamUrl;
+  String Function(String? coverArtId)? _getCoverArtUrl;
+
   AudioPlayerHandler() {
     _init();
   }
@@ -48,11 +55,12 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     _player.playbackEventStream.listen(_broadcastPlaybackState);
 
     // When the current index changes (e.g. gapless transition to next track),
-    // update the current media item.
+    // update the current media item and persist state.
     _player.currentIndexStream.listen((index) {
       if (index != null && index >= 0 && index < _mediaItems.length) {
         _currentIndex = index;
         mediaItem.add(_mediaItems[index]);
+        _saveQueueState();
       }
     });
 
@@ -107,6 +115,10 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     required String Function(String songId) getStreamUrl,
     required String Function(String? coverArtId) getCoverArtUrl,
   }) async {
+    // Store URL callbacks for queue restoration
+    _getStreamUrl = getStreamUrl;
+    _getCoverArtUrl = getCoverArtUrl;
+
     _queue
       ..clear()
       ..addAll(songs);
@@ -130,6 +142,9 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     await _playlist.addAll(audioSources);
     await _player.setAudioSource(_playlist, initialIndex: startIndex);
     await _player.play();
+
+    // Persist queue state for restoration after app kill
+    _saveQueueState();
   }
 
   /// Appends a [song] to the end of the current queue.
@@ -209,6 +224,8 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
   void setShuffle(bool enabled) {
     _shuffleEnabled = enabled;
     _player.setShuffleModeEnabled(enabled);
+    // Re-broadcast so the UI sees the updated shuffle state immediately
+    _broadcastPlaybackState(_player.playbackEvent);
   }
 
   @override
@@ -231,6 +248,8 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
         _player.setLoopMode(LoopMode.all);
         break;
     }
+    // Re-broadcast so the UI sees the updated repeat state immediately
+    _broadcastPlaybackState(_player.playbackEvent);
   }
 
   @override
@@ -266,6 +285,7 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
     _queue.clear();
     _mediaItems.clear();
     _currentIndex = -1;
+    _clearSavedQueueState();
     await super.stop();
   }
 
@@ -389,6 +409,123 @@ class AudioPlayerHandler extends BaseAudioHandler with SeekHandler {
         return AudioServiceRepeatMode.one;
       case RepeatMode.all:
         return AudioServiceRepeatMode.all;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Queue state persistence
+  // ---------------------------------------------------------------------------
+
+  static const _queueKey = 'jusplay_saved_queue';
+  static const _indexKey = 'jusplay_saved_index';
+  static const _positionKey = 'jusplay_saved_position';
+  static const _shuffleKey = 'jusplay_saved_shuffle';
+  static const _repeatKey = 'jusplay_saved_repeat';
+
+  /// Persists the current queue, index, position, shuffle and repeat state.
+  Future<void> _saveQueueState() async {
+    if (_queue.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final queueJson = jsonEncode(_queue.map((s) => s.toJson()).toList());
+      await prefs.setString(_queueKey, queueJson);
+      await prefs.setInt(_indexKey, _currentIndex);
+      await prefs.setDouble(
+        _positionKey,
+        _player.position.inMilliseconds.toDouble(),
+      );
+      await prefs.setBool(_shuffleKey, _shuffleEnabled);
+      await prefs.setString(_repeatKey, _repeatMode.name);
+    } catch (e) {
+      print('[AudioHandler] Failed to save queue state: $e');
+    }
+  }
+
+  /// Clears persisted queue state (called on explicit stop).
+  Future<void> _clearSavedQueueState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_queueKey);
+      await prefs.remove(_indexKey);
+      await prefs.remove(_positionKey);
+      await prefs.remove(_shuffleKey);
+      await prefs.remove(_repeatKey);
+    } catch (_) {}
+  }
+
+  /// Checks for a saved queue and restores it without auto-playing.
+  ///
+  /// [getStreamUrl] and [getCoverArtUrl] must be provided by the caller
+  /// so the handler can rebuild audio sources.
+  Future<bool> restoreQueueState({
+    required String Function(String songId) getStreamUrl,
+    required String Function(String? coverArtId) getCoverArtUrl,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final queueJson = prefs.getString(_queueKey);
+      if (queueJson == null) return false;
+
+      final decoded = jsonDecode(queueJson) as List;
+      if (decoded.isEmpty) return false;
+
+      final songs = decoded
+          .map((j) => Song.fromJson(j as Map<String, dynamic>))
+          .toList();
+      final savedIndex = prefs.getInt(_indexKey) ?? 0;
+      final savedPositionMs = prefs.getDouble(_positionKey) ?? 0;
+      final savedShuffle = prefs.getBool(_shuffleKey) ?? false;
+      final savedRepeatName = prefs.getString(_repeatKey) ?? 'none';
+
+      // Store URL callbacks
+      _getStreamUrl = getStreamUrl;
+      _getCoverArtUrl = getCoverArtUrl;
+
+      _queue
+        ..clear()
+        ..addAll(songs);
+
+      _mediaItems.clear();
+      final audioSources = <AudioSource>[];
+
+      for (final song in songs) {
+        final streamUrl = getStreamUrl(song.id);
+        final coverArtUrl = getCoverArtUrl(song.coverArtId);
+        final item = _songToMediaItem(song, streamUrl, coverArtUrl);
+        _mediaItems.add(item);
+        audioSources.add(AudioSource.uri(Uri.parse(streamUrl), tag: item));
+      }
+
+      final index = savedIndex.clamp(0, songs.length - 1);
+      _currentIndex = index;
+      queue.add(List.unmodifiable(_mediaItems));
+      mediaItem.add(_mediaItems[index]);
+
+      await _playlist.clear();
+      await _playlist.addAll(audioSources);
+      await _player.setAudioSource(
+        _playlist,
+        initialIndex: index,
+        initialPosition: Duration(milliseconds: savedPositionMs.toInt()),
+      );
+
+      // Restore shuffle and repeat modes
+      _shuffleEnabled = savedShuffle;
+      _player.setShuffleModeEnabled(savedShuffle);
+
+      final repeatMode = RepeatMode.values.firstWhere(
+        (m) => m.name == savedRepeatName,
+        orElse: () => RepeatMode.none,
+      );
+      setRepeat(repeatMode);
+
+      // Don't auto-play — user will see the restored state and can tap play
+      print('[AudioHandler] Restored queue: ${songs.length} songs, '
+          'index=$index, position=${savedPositionMs.toInt()}ms');
+      return true;
+    } catch (e) {
+      print('[AudioHandler] Failed to restore queue state: $e');
+      return false;
     }
   }
 }

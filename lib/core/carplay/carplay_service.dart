@@ -52,6 +52,8 @@ class CarPlayService {
         return _getPlaylistSongs(id);
       case 'getFavourites':
         return _getFavourites();
+      case 'getSongs':
+        return _getSongs();
       case 'playSongs':
         final source = call.arguments['source'] as String;
         final sourceId = call.arguments['sourceId'] as String;
@@ -139,6 +141,12 @@ class CarPlayService {
     return _songsToMaps(songs);
   }
 
+  Future<List<Map<String, dynamic>>> _getSongs() async {
+    final result = await _api.search('', songCount: 500);
+    _songCache['songs:all'] = result.songs;
+    return _songsToMaps(result.songs);
+  }
+
   // ---------------------------------------------------------------------------
   // Playback
   // ---------------------------------------------------------------------------
@@ -166,6 +174,10 @@ class CarPlayService {
           break;
         case 'favourites':
           songs = await _api.getStarred();
+          break;
+        case 'songs':
+          final result = await _api.search('', songCount: 500);
+          songs = result.songs;
           break;
         default:
           return;

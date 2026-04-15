@@ -30,11 +30,13 @@ class PlaylistGenerator {
     required List<String> artists,
     required List<String> songLines,
   }) {
-    return '''You are a music curator. Given the user\'s library below, select up to 25 song IDs that best match the request. IMPORTANT: Ensure artist diversity — pick no more than 3 songs from any single artist. Spread picks across many different artists. Return ONLY a valid JSON array of song ID strings.
+    return '''You are a music curator. Given the user\'s library below, select up to 35 song IDs that best match the request. Be generous — pick all songs that could fit, not just perfect matches.
+
+Use genre, year/era, duration, and play count to make better matches. Favour ★ starred songs — the user loves those. Songs from the same genre+era are likely similar sounding. IMPORTANT: Ensure artist diversity — pick no more than 3 songs from any single artist. Spread picks across many different artists. Return ONLY a valid JSON array of song ID strings.
 
 Library genres: ${genres.join(', ')}
 Artists: ${artists.join(', ')}
-Songs (id|title|artist|genre|duration_secs):
+Songs (id | title | artist | genre | year | duration | plays | starred):
 ${songLines.join('\n')}
 
 User request: "$userRequest"
@@ -137,13 +139,18 @@ Response format: ["id1","id2","id3"]''';
       final matchedGenres = parseResponse(genreResponse);
       print('[AI] Step 1 - matched genres: $matchedGenres');
 
-      // Step 2: Filter songs by matched genres, with fallback
+      // Step 2: Filter songs by matched genres + neighbours, with fallback
       onStatus?.call('Filtering songs by genre…');
       List<Song> candidates;
       if (matchedGenres.isNotEmpty) {
-        final matchedLower = matchedGenres.map((g) => g.toLowerCase()).toSet();
+        // Expand matched genres with their acoustic neighbours
+        final expandedGenres = <String>{};
+        for (final g in matchedGenres) {
+          expandedGenres.addAll(_getGenreNeighbours(g));
+        }
+        print('[AI] Step 2 - expanded genres: $expandedGenres');
         candidates = allSongs
-            .where((s) => matchedLower.contains((s.genre ?? '').toLowerCase()))
+            .where((s) => expandedGenres.contains((s.genre ?? '').toLowerCase()))
             .toList();
       } else {
         candidates = List.of(allSongs);
@@ -176,12 +183,15 @@ Response format: ["id1","id2","id3"]''';
         final batch = batches[b];
         final songLines = <String>[];
         for (var i = 0; i < batch.length; i++) {
-          final s = batch[i];
-          songLines.add('${i + 1}. ${s.title} by ${s.artist ?? "Unknown"}');
+          songLines.add(_richSongLine(i + 1, batch[i]));
         }
 
         final songPrompt =
-            'Pick the best songs for "$userRequest" from this list:\n\n'
+            'Pick the best songs for "$userRequest" from this list. '
+            'Use genre, year/era, duration, and play count to make better matches. '
+            'Favour ★ starred songs — the user loves those. '
+            'Songs from the same genre+era are likely similar sounding. '
+            'Be generous — pick all that could fit the mood, not just perfect matches.\n\n'
             '${songLines.join("\n")}\n\n'
             'Reply with ONLY the song numbers as a JSON array, like [1,3,5]. '
             'Pick all that fit the mood.';
@@ -197,15 +207,64 @@ Response format: ["id1","id2","id3"]''';
             .map((n) => batch[n - 1]);
         allPicks.addAll(batchPicks);
 
-        // Stop early if we have enough songs
-        if (allPicks.length >= 25) break;
+        // Stop early only if we have plenty of songs
+        if (allPicks.length >= 40) break;
       }
 
-      print('[AI] Total picks: ${allPicks.length}');
+      print('[AI] Total picks after pass 1: ${allPicks.length}');
+
+      // Pass 2: If under target, retry with ALL songs (relaxed genre filter)
+      if (allPicks.length < 25 && matchedGenres.isNotEmpty) {
+        onStatus?.call('Expanding search to all songs…');
+        final remaining = allSongs.where((s) => !allPicks.contains(s)).toList();
+        remaining.shuffle(Random());
+        final extraBatches = <List<Song>>[];
+        // Process up to 200 remaining songs (was 100)
+        for (var i = 0; i < remaining.length && i < 200; i += batchSize) {
+          extraBatches.add(remaining.sublist(
+            i,
+            (i + batchSize > remaining.length) ? remaining.length : i + batchSize,
+          ));
+        }
+        for (var b = 0; b < extraBatches.length; b++) {
+          onStatus?.call('Pass 2: evaluating… (${b + 1}/${extraBatches.length})');
+          final batch = extraBatches[b];
+          final songLines = <String>[];
+          for (var i = 0; i < batch.length; i++) {
+            songLines.add(_richSongLine(i + 1, batch[i]));
+          }
+          final songPrompt =
+              'Pick songs that could work for "$userRequest" from this list. '
+              'Use genre, era, and play count as signals. Favour ★ starred songs. '
+              'Be generous with your picks.\n\n'
+              '${songLines.join("\n")}\n\n'
+              'Reply with ONLY the song numbers as a JSON array, like [1,3,5].';
+          final songResponse = await _callNativeAi(songPrompt);
+          if (songResponse == null) continue;
+          final pickedNumbers = parseNumberResponse(songResponse);
+          print('[AI] Pass 2 Batch ${b + 1} - picked: $pickedNumbers');
+          allPicks.addAll(
+            pickedNumbers.where((n) => n >= 1 && n <= batch.length).map((n) => batch[n - 1]),
+          );
+          if (allPicks.length >= 40) break;
+        }
+        print('[AI] Total picks after pass 2: ${allPicks.length}');
+      }
+
+      // Pass 3: If AI still fell short, top up with smart algorithm picks
+      if (allPicks.length < 20) {
+        onStatus?.call('Topping up with smart matching…');
+        final smartPicks = _generateSmart(userRequest, allSongs, null);
+        // Add smart picks that aren't already in the AI picks
+        final existingIds = allPicks.map((s) => s.id).toSet();
+        final topUp = smartPicks.where((s) => !existingIds.contains(s.id));
+        allPicks.addAll(topUp);
+        print('[AI] Total picks after smart top-up: ${allPicks.length}');
+      }
 
       if (allPicks.isEmpty) {
-        // AI didn't pick anything — return genre-filtered sample
-        return candidates.take(15).toList();
+        // Nothing worked — return genre-filtered sample
+        return candidates.take(20).toList();
       }
 
       return _enforceArtistDiversity(allPicks);
@@ -312,6 +371,15 @@ Response format: ["id1","id2","id3"]''';
       }
     }
 
+    // Expand target genres with acoustic neighbours
+    final expandedGenres = <String>{};
+    for (final g in targetGenres) {
+      expandedGenres.addAll(_getGenreNeighbours(g));
+    }
+    if (expandedGenres.isNotEmpty) {
+      targetGenres.addAll(expandedGenres);
+    }
+
     onStatus?.call('Matching songs to your vibe…');
     for (final song in allSongs) {
       var score = 0.0;
@@ -342,6 +410,14 @@ Response format: ["id1","id2","id3"]''';
         }
       }
 
+      // Starred bonus — user explicitly favourited these
+      if (song.starred != null) {
+        score += 5.0;
+      }
+
+      // Play count bonus — songs the user actually listens to (capped at +5)
+      score += 0.1 * min(song.playCount, 50);
+
       // Small random jitter for variety
       score += Random().nextDouble() * 2.0;
 
@@ -354,7 +430,7 @@ Response format: ["id1","id2","id3"]''';
     if (scores.isEmpty && allSongs.isNotEmpty) {
       onStatus?.call('Picking a mix for you…');
       final shuffled = List.of(allSongs)..shuffle(Random());
-      return shuffled.take(25).toList();
+      return shuffled.take(35).toList();
     }
 
     // Sort by score descending, then pick with artist diversity cap
@@ -467,12 +543,16 @@ Response format: ["id1","id2","id3"]''';
     final matchedGenres = genreResponse != null ? parseResponse(genreResponse) : <String>[];
     print('[AI] Gemini Step 1 - matched genres: $matchedGenres');
 
-    // Step 2: Filter songs by matched genres
+    // Step 2: Filter songs by matched genres + neighbours
     onStatus?.call('Filtering songs by genre…');
     List<Song> candidates;
     if (matchedGenres.isNotEmpty) {
-      final matchedLower = matchedGenres.map((g) => g.toLowerCase()).toSet();
-      candidates = allSongs.where((s) => matchedLower.contains((s.genre ?? '').toLowerCase())).toList();
+      final expandedGenres = <String>{};
+      for (final g in matchedGenres) {
+        expandedGenres.addAll(_getGenreNeighbours(g));
+      }
+      print('[AI] Gemini Step 2 - expanded genres: $expandedGenres');
+      candidates = allSongs.where((s) => expandedGenres.contains((s.genre ?? '').toLowerCase())).toList();
     } else {
       candidates = List.of(allSongs);
     }
@@ -494,12 +574,16 @@ Response format: ["id1","id2","id3"]''';
       final batch = batches[b];
       final songLines = <String>[];
       for (var i = 0; i < batch.length; i++) {
-        songLines.add('${i + 1}. ${batch[i].title} by ${batch[i].artist ?? "Unknown"}');
+        songLines.add(_richSongLine(i + 1, batch[i]));
       }
 
       final songPrompt =
           'Pick the best songs for "$userRequest" from this list. '
-          'Ensure artist diversity — no more than 3 songs from any single artist.\n\n'
+          'Use genre, year/era, duration, and play count to make better matches. '
+          'Favour ★ starred songs — the user loves those. '
+          'Songs from the same genre+era are likely similar sounding. '
+          'Ensure artist diversity — no more than 3 songs from any single artist. '
+          'Be generous — pick all that could fit the mood, not just perfect matches.\n\n'
           '${songLines.join("\n")}\n\n'
           'Reply with ONLY the song numbers as a JSON array, like [1,3,5]. Pick all that fit the mood.';
 
@@ -514,19 +598,160 @@ Response format: ["id1","id2","id3"]''';
           .map((n) => batch[n - 1]);
       allPicks.addAll(batchPicks);
 
-      if (allPicks.length >= 25) break;
+      if (allPicks.length >= 40) break;
+    }
+
+    print('[AI] Gemini total picks after pass 1: ${allPicks.length}');
+
+    // Pass 2: If under target, retry with ALL songs (relaxed genre filter)
+    if (allPicks.length < 25 && matchedGenres.isNotEmpty) {
+      onStatus?.call('Expanding search to all songs…');
+      final remaining = allSongs.where((s) => !allPicks.contains(s)).toList();
+      remaining.shuffle(Random());
+      final extraBatches = <List<Song>>[];
+      for (var i = 0; i < remaining.length && i < 200; i += batchSize) {
+        extraBatches.add(remaining.sublist(
+          i,
+          (i + batchSize > remaining.length) ? remaining.length : i + batchSize,
+        ));
+      }
+      for (var b = 0; b < extraBatches.length; b++) {
+        onStatus?.call('Pass 2: evaluating… (${b + 1}/${extraBatches.length})');
+        final batch = extraBatches[b];
+        final songLines = <String>[];
+        for (var i = 0; i < batch.length; i++) {
+          songLines.add(_richSongLine(i + 1, batch[i]));
+        }
+        final songPrompt =
+            'Pick songs that could work for "$userRequest" from this list. '
+            'Use genre, era, and play count as signals. Favour ★ starred songs. '
+            'Be generous with your picks.\n\n'
+            '${songLines.join("\n")}\n\n'
+            'Reply with ONLY the song numbers as a JSON array, like [1,3,5].';
+        final songResponse = await callGemini(songPrompt);
+        if (songResponse == null) continue;
+        final pickedNumbers = parseNumberResponse(songResponse);
+        print('[AI] Gemini Pass 2 Batch ${b + 1} - picked: $pickedNumbers');
+        allPicks.addAll(
+          pickedNumbers.where((n) => n >= 1 && n <= batch.length).map((n) => batch[n - 1]),
+        );
+        if (allPicks.length >= 40) break;
+      }
+      print('[AI] Gemini total picks after pass 2: ${allPicks.length}');
+    }
+
+    // Pass 3: If AI still fell short, top up with smart algorithm picks
+    if (allPicks.length < 20) {
+      onStatus?.call('Topping up with smart matching…');
+      final smartPicks = _generateSmart(userRequest, allSongs, null);
+      final existingIds = allPicks.map((s) => s.id).toSet();
+      final topUp = smartPicks.where((s) => !existingIds.contains(s.id));
+      allPicks.addAll(topUp);
+      print('[AI] Gemini total picks after smart top-up: ${allPicks.length}');
     }
 
     if (allPicks.isEmpty) {
-      return (songs: candidates.take(15).toList(), source: AiSource.gemini);
+      return (songs: candidates.take(20).toList(), source: AiSource.gemini);
     }
 
     return (songs: _enforceArtistDiversity(allPicks), source: AiSource.gemini);
   }
 
+  // ---------------------------------------------------------------------------
+  // Rich metadata helpers
+  // ---------------------------------------------------------------------------
+
+  /// Returns a duration category for AI context.
+  static String _durationCategory(int durationSecs) {
+    if (durationSecs < 180) return 'short';
+    if (durationSecs <= 300) return 'medium';
+    return 'long';
+  }
+
+  /// Builds a rich context line for a single song (numbered for batch prompts).
+  static String _richSongLine(int number, Song s) {
+    final parts = <String>[
+      '$number. ${s.title}',
+      s.artist ?? 'Unknown',
+      if (s.genre != null && s.genre!.isNotEmpty) s.genre!,
+      if (s.year != null) '${s.year}',
+      _durationCategory(s.duration),
+      'plays:${s.playCount}',
+      if (s.starred != null) '★',
+    ];
+    return parts.join(' | ');
+  }
+
+  /// Genre neighbourhood map: each genre maps to acoustically similar genres.
+  static const _genreNeighbours = <String, List<String>>{
+    'hard rock': ['rock', 'classic rock', 'metal', 'alternative', 'grunge'],
+    'classic rock': ['rock', 'hard rock', 'blues rock', 'southern rock', 'progressive rock'],
+    'rock': ['alternative', 'indie rock', 'classic rock', 'hard rock', 'pop rock'],
+    'alternative': ['indie rock', 'rock', 'grunge', 'post-punk', 'shoegaze'],
+    'indie rock': ['indie', 'alternative', 'indie pop', 'rock', 'lo-fi'],
+    'indie': ['indie rock', 'indie pop', 'alternative', 'folk', 'lo-fi'],
+    'metal': ['hard rock', 'heavy metal', 'thrash metal', 'nu metal', 'progressive metal'],
+    'heavy metal': ['metal', 'thrash metal', 'hard rock', 'power metal', 'doom metal'],
+    'thrash metal': ['metal', 'heavy metal', 'death metal', 'speed metal', 'hardcore'],
+    'death metal': ['metal', 'thrash metal', 'black metal', 'grindcore'],
+    'nu metal': ['metal', 'alternative', 'hard rock', 'rap metal', 'industrial'],
+    'punk': ['pop punk', 'post-punk', 'hardcore', 'ska punk', 'alternative'],
+    'pop punk': ['punk', 'pop', 'alternative', 'emo', 'rock'],
+    'post-punk': ['punk', 'new wave', 'gothic rock', 'alternative', 'shoegaze'],
+    'jazz': ['smooth jazz', 'fusion', 'soul', 'bossa nova', 'swing', 'bebop'],
+    'smooth jazz': ['jazz', 'r&b', 'soul', 'fusion', 'easy listening'],
+    'fusion': ['jazz', 'funk', 'progressive rock', 'smooth jazz'],
+    'blues': ['blues rock', 'soul', 'r&b', 'jazz', 'country blues'],
+    'soul': ['r&b', 'funk', 'motown', 'blues', 'gospel'],
+    'r&b': ['soul', 'hip-hop', 'funk', 'pop', 'smooth jazz'],
+    'funk': ['soul', 'r&b', 'disco', 'jazz', 'hip-hop'],
+    'hip-hop': ['rap', 'trap', 'r&b', 'grime', 'lo-fi hip hop'],
+    'rap': ['hip-hop', 'trap', 'grime', 'conscious rap'],
+    'pop': ['synth-pop', 'indie pop', 'dance pop', 'electropop', 'r&b'],
+    'synth-pop': ['new wave', 'electronic', 'pop', 'synthwave', 'electropop'],
+    'electronic': ['edm', 'house', 'techno', 'ambient', 'synthwave', 'idm'],
+    'edm': ['house', 'trance', 'dubstep', 'drum and bass', 'electronic', 'dance'],
+    'house': ['deep house', 'tech house', 'edm', 'disco', 'dance', 'electronic'],
+    'techno': ['electronic', 'house', 'industrial', 'minimal', 'ambient techno'],
+    'trance': ['edm', 'progressive trance', 'psytrance', 'electronic'],
+    'ambient': ['new age', 'electronic', 'post-rock', 'downtempo', 'lo-fi'],
+    'classical': ['orchestral', 'chamber music', 'baroque', 'romantic', 'contemporary classical'],
+    'country': ['americana', 'folk', 'bluegrass', 'country rock', 'southern rock'],
+    'folk': ['acoustic', 'singer-songwriter', 'americana', 'indie folk', 'celtic'],
+    'acoustic': ['folk', 'singer-songwriter', 'unplugged', 'indie'],
+    'reggae': ['ska', 'dub', 'dancehall', 'roots reggae'],
+    'latin': ['salsa', 'bossa nova', 'reggaeton', 'latin pop', 'cumbia'],
+    'world': ['african', 'celtic', 'latin', 'middle eastern'],
+    'lo-fi': ['lo-fi hip hop', 'ambient', 'chillwave', 'indie', 'downtempo'],
+    'post-rock': ['ambient', 'shoegaze', 'experimental', 'math rock', 'progressive rock'],
+    'progressive rock': ['art rock', 'classic rock', 'progressive metal', 'post-rock'],
+    'grunge': ['alternative', 'hard rock', 'punk', 'seattle sound'],
+    'disco': ['funk', 'dance', 'house', 'pop', 'soul'],
+    'gospel': ['soul', 'christian', 'spiritual', 'r&b'],
+    'new wave': ['synth-pop', 'post-punk', 'alternative', 'new romantic'],
+    'synthwave': ['synth-pop', 'electronic', 'retrowave', 'new wave'],
+  };
+
+  /// Returns the set of neighbouring genres for a given genre (lowercase).
+  static Set<String> _getGenreNeighbours(String genre) {
+    final lower = genre.toLowerCase();
+    final result = <String>{lower};
+    final neighbours = _genreNeighbours[lower];
+    if (neighbours != null) {
+      result.addAll(neighbours.map((g) => g.toLowerCase()));
+    }
+    // Also check if this genre appears as a neighbour of others
+    for (final entry in _genreNeighbours.entries) {
+      if (entry.value.any((g) => g.toLowerCase() == lower)) {
+        result.add(entry.key.toLowerCase());
+      }
+    }
+    return result;
+  }
+
   /// Caps songs per artist to ensure diverse playlists across all AI sources,
   /// then shuffles to avoid artist clustering.
-  static List<Song> _enforceArtistDiversity(List<Song> songs, {int maxPerArtist = 3, int maxTotal = 25}) {
+  static List<Song> _enforceArtistDiversity(List<Song> songs, {int maxPerArtist = 3, int maxTotal = 35}) {
     final picks = <Song>[];
     final artistCount = <String, int>{};
     for (final song in songs) {

@@ -26,6 +26,7 @@ dependencies:
   # Local storage
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  shared_preferences: ^2.3.4
 
   # Utilities
   crypto: ^3.0.6

@@ -1,9 +1,10 @@
 import Flutter
 import UIKit
+import WatchConnectivity
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-  /// The binary messenger from the Flutter engine, exposed for CarPlay.
+  /// The binary messenger from the Flutter engine, exposed for CarPlay & Watch.
   private(set) var binaryMessenger: FlutterBinaryMessenger?
 
   override func application(
@@ -24,6 +25,13 @@ import UIKit
     // Register AI method channel
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AiMethodChannel") {
       AiMethodChannel.register(with: registrar)
+    }
+
+    // Configure WatchConnectivity bridge
+    if let messenger = binaryMessenger {
+      if #available(iOS 14.0, *) {
+        WatchSessionManager.shared.configure(messenger: messenger)
+      }
     }
   }
 }

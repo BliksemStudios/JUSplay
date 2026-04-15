@@ -12,6 +12,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
     var interfaceController: CPInterfaceController?
     private var carplayChannel: FlutterMethodChannel?
 
+    /// Track pending fetches so we can retry on reconnect
+    private var isConnected = false
+
     // MARK: - CPTemplateApplicationSceneDelegate
 
     func templateApplicationScene(
@@ -19,6 +22,7 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         didConnect interfaceController: CPInterfaceController
     ) {
         self.interfaceController = interfaceController
+        self.isConnected = true
 
         // Get the binary messenger from the main app's Flutter engine
         if let appDelegate = UIApplication.shared.delegate as? AppDelegate,
@@ -36,6 +40,7 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         _ templateApplicationScene: CPTemplateApplicationScene,
         didDisconnectInterfaceController interfaceController: CPInterfaceController
     ) {
+        self.isConnected = false
         self.interfaceController = nil
         self.carplayChannel = nil
     }
@@ -46,8 +51,8 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         let tabs: [CPTemplate] = [
             buildRecentlyPlayedTab(),
             buildArtistsTab(),
-            buildAlbumsTab(),
             buildPlaylistsTab(),
+            buildSongsTab(),
             buildFavouritesTab(),
         ]
 
@@ -62,9 +67,12 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         template.tabImage = UIImage(systemName: "clock")
         template.emptyViewTitleVariants = ["Loading..."]
 
-        fetchAlbums(type: "recent", limit: 20) { [weak self] items in
+        fetchAlbums(type: "recent", limit: 20, template: template) { [weak self] items in
+            guard self?.isConnected == true else { return }
             template.updateSections([CPListSection(items: items)])
-            template.emptyViewTitleVariants = ["No recent albums"]
+            if items.isEmpty {
+                template.emptyViewTitleVariants = ["No recent albums"]
+            }
         }
 
         return template
@@ -75,22 +83,12 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         template.tabImage = UIImage(systemName: "music.mic")
         template.emptyViewTitleVariants = ["Loading..."]
 
-        fetchArtists { [weak self] items in
+        fetchArtists(template: template) { [weak self] items in
+            guard self?.isConnected == true else { return }
             template.updateSections([CPListSection(items: items)])
-            template.emptyViewTitleVariants = ["No artists"]
-        }
-
-        return template
-    }
-
-    private func buildAlbumsTab() -> CPListTemplate {
-        let template = CPListTemplate(title: "Albums", sections: [])
-        template.tabImage = UIImage(systemName: "square.stack")
-        template.emptyViewTitleVariants = ["Loading..."]
-
-        fetchAlbums(type: "alphabeticalByName", limit: 50) { [weak self] items in
-            template.updateSections([CPListSection(items: items)])
-            template.emptyViewTitleVariants = ["No albums"]
+            if items.isEmpty {
+                template.emptyViewTitleVariants = ["No artists"]
+            }
         }
 
         return template
@@ -101,9 +99,43 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         template.tabImage = UIImage(systemName: "list.bullet")
         template.emptyViewTitleVariants = ["Loading..."]
 
-        fetchPlaylists { [weak self] items in
+        fetchPlaylists(template: template) { [weak self] items in
+            guard self?.isConnected == true else { return }
             template.updateSections([CPListSection(items: items)])
-            template.emptyViewTitleVariants = ["No playlists"]
+            if items.isEmpty {
+                template.emptyViewTitleVariants = ["No playlists"]
+            }
+        }
+
+        return template
+    }
+
+    private func buildSongsTab() -> CPListTemplate {
+        let template = CPListTemplate(title: "Songs", sections: [])
+        template.tabImage = UIImage(systemName: "music.note")
+        template.emptyViewTitleVariants = ["Loading..."]
+
+        fetchSongs(template: template) { [weak self] items in
+            guard self?.isConnected == true else { return }
+            // Add shuffle all at the top
+            let shuffleAll = CPListItem(text: "Shuffle All", detailText: "\(items.count) songs")
+            shuffleAll.setImage(UIImage(systemName: "shuffle"))
+            shuffleAll.handler = { [weak self] _, completionHandler in
+                self?.carplayChannel?.invokeMethod("playSongs", arguments: [
+                    "source": "songs",
+                    "sourceId": "all",
+                    "startIndex": 0,
+                    "shuffle": true,
+                ])
+                completionHandler()
+            }
+
+            let controlSection = CPListSection(items: [shuffleAll])
+            let songsSection = CPListSection(items: items, header: "All Songs", sectionIndexTitle: nil)
+            template.updateSections([controlSection, songsSection])
+            if items.isEmpty {
+                template.emptyViewTitleVariants = ["No songs"]
+            }
         }
 
         return template
@@ -114,19 +146,82 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         template.tabImage = UIImage(systemName: "heart.fill")
         template.emptyViewTitleVariants = ["Loading..."]
 
-        fetchFavourites { [weak self] items in
-            template.updateSections([CPListSection(items: items)])
-            template.emptyViewTitleVariants = ["No favourites"]
+        fetchFavourites(template: template) { [weak self] items in
+            guard self?.isConnected == true else { return }
+            // Add shuffle favourites at top if we have songs
+            if !items.isEmpty {
+                let shuffleFavs = CPListItem(text: "Shuffle Favourites", detailText: "\(items.count) songs")
+                shuffleFavs.setImage(UIImage(systemName: "shuffle"))
+                shuffleFavs.handler = { [weak self] _, completionHandler in
+                    self?.carplayChannel?.invokeMethod("playSongs", arguments: [
+                        "source": "favourites",
+                        "sourceId": "",
+                        "startIndex": 0,
+                        "shuffle": true,
+                    ])
+                    completionHandler()
+                }
+                let controlSection = CPListSection(items: [shuffleFavs])
+                let songsSection = CPListSection(items: items, header: "Songs", sectionIndexTitle: nil)
+                template.updateSections([controlSection, songsSection])
+            } else {
+                template.emptyViewTitleVariants = ["No favourites"]
+            }
         }
 
         return template
     }
 
-    // MARK: - Data Fetching via Method Channel
+    // MARK: - Data Fetching via Method Channel (with retry)
 
-    private func fetchArtists(completion: @escaping ([CPListItem]) -> Void) {
-        carplayChannel?.invokeMethod("getArtists", arguments: nil) { [weak self] result in
+    /// Wraps a method channel call with error handling and automatic retry.
+    private func invokeWithRetry(
+        _ method: String,
+        arguments: Any? = nil,
+        retryCount: Int = 2,
+        retryDelay: TimeInterval = 2.0,
+        completion: @escaping (Any?) -> Void
+    ) {
+        guard let channel = carplayChannel else {
+            print("[CarPlay] No channel available for \(method)")
+            if retryCount > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) { [weak self] in
+                    self?.invokeWithRetry(method, arguments: arguments,
+                                         retryCount: retryCount - 1,
+                                         retryDelay: retryDelay,
+                                         completion: completion)
+                }
+            } else {
+                completion(nil)
+            }
+            return
+        }
+
+        channel.invokeMethod(method, arguments: arguments) { [weak self] result in
+            if let error = result as? FlutterError {
+                print("[CarPlay] Error from \(method): \(error.code) - \(error.message ?? "")")
+                if retryCount > 0 {
+                    print("[CarPlay] Retrying \(method) in \(retryDelay)s (\(retryCount) left)")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) {
+                        self?.invokeWithRetry(method, arguments: arguments,
+                                             retryCount: retryCount - 1,
+                                             retryDelay: retryDelay,
+                                             completion: completion)
+                    }
+                } else {
+                    completion(nil)
+                }
+                return
+            }
+
+            completion(result)
+        }
+    }
+
+    private func fetchArtists(template: CPListTemplate, completion: @escaping ([CPListItem]) -> Void) {
+        invokeWithRetry("getArtists") { [weak self] result in
             guard let artists = result as? [[String: Any]] else {
+                template.emptyViewTitleVariants = ["Could not load artists — tap to retry"]
                 completion([])
                 return
             }
@@ -159,10 +254,11 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         }
     }
 
-    private func fetchAlbums(type: String, limit: Int, completion: @escaping ([CPListItem]) -> Void) {
+    private func fetchAlbums(type: String, limit: Int, template: CPListTemplate, completion: @escaping ([CPListItem]) -> Void) {
         let args: [String: Any] = ["type": type, "limit": limit]
-        carplayChannel?.invokeMethod("getAlbums", arguments: args) { [weak self] result in
+        invokeWithRetry("getAlbums", arguments: args) { [weak self] result in
             guard let albums = result as? [[String: Any]] else {
+                template.emptyViewTitleVariants = ["Could not load albums — tap to retry"]
                 completion([])
                 return
             }
@@ -195,9 +291,10 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         }
     }
 
-    private func fetchPlaylists(completion: @escaping ([CPListItem]) -> Void) {
-        carplayChannel?.invokeMethod("getPlaylists", arguments: nil) { [weak self] result in
+    private func fetchPlaylists(template: CPListTemplate, completion: @escaping ([CPListItem]) -> Void) {
+        invokeWithRetry("getPlaylists") { [weak self] result in
             guard let playlists = result as? [[String: Any]] else {
+                template.emptyViewTitleVariants = ["Could not load playlists — tap to retry"]
                 completion([])
                 return
             }
@@ -230,9 +327,24 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         }
     }
 
-    private func fetchFavourites(completion: @escaping ([CPListItem]) -> Void) {
-        carplayChannel?.invokeMethod("getFavourites", arguments: nil) { [weak self] result in
+    private func fetchSongs(template: CPListTemplate, completion: @escaping ([CPListItem]) -> Void) {
+        invokeWithRetry("getSongs") { [weak self] result in
             guard let songs = result as? [[String: Any]] else {
+                template.emptyViewTitleVariants = ["Could not load songs"]
+                completion([])
+                return
+            }
+
+            self?.buildSongItems(from: songs, startIndex: 0, source: "songs", sourceId: "all") { items in
+                completion(items)
+            }
+        }
+    }
+
+    private func fetchFavourites(template: CPListTemplate, completion: @escaping ([CPListItem]) -> Void) {
+        invokeWithRetry("getFavourites") { [weak self] result in
+            guard let songs = result as? [[String: Any]] else {
+                template.emptyViewTitleVariants = ["Could not load favourites"]
                 completion([])
                 return
             }
@@ -249,9 +361,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         let template = CPListTemplate(title: artistName, sections: [])
         template.emptyViewTitleVariants = ["Loading..."]
 
-        carplayChannel?.invokeMethod("getArtistAlbums", arguments: ["id": artistId]) { [weak self] result in
+        invokeWithRetry("getArtistAlbums", arguments: ["id": artistId]) { [weak self] result in
             guard let albums = result as? [[String: Any]] else {
-                template.emptyViewTitleVariants = ["No albums"]
+                template.emptyViewTitleVariants = ["Could not load albums"]
                 return
             }
 
@@ -278,7 +390,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
             }
 
             template.updateSections([CPListSection(items: items)])
-            template.emptyViewTitleVariants = ["No albums"]
+            if items.isEmpty {
+                template.emptyViewTitleVariants = ["No albums"]
+            }
         }
 
         interfaceController?.pushTemplate(template, animated: true, completion: nil)
@@ -288,9 +402,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         let template = CPListTemplate(title: albumName, sections: [])
         template.emptyViewTitleVariants = ["Loading..."]
 
-        carplayChannel?.invokeMethod("getAlbumSongs", arguments: ["id": albumId]) { [weak self] result in
+        invokeWithRetry("getAlbumSongs", arguments: ["id": albumId]) { [weak self] result in
             guard let songs = result as? [[String: Any]] else {
-                template.emptyViewTitleVariants = ["No songs"]
+                template.emptyViewTitleVariants = ["Could not load songs"]
                 return
             }
 
@@ -323,7 +437,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
                 let controlSection = CPListSection(items: [playAll, shuffle])
                 let songsSection = CPListSection(items: items, header: "Songs", sectionIndexTitle: nil)
                 template.updateSections([controlSection, songsSection])
-                template.emptyViewTitleVariants = ["No songs"]
+                if items.isEmpty {
+                    template.emptyViewTitleVariants = ["No songs"]
+                }
             }
         }
 
@@ -334,9 +450,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
         let template = CPListTemplate(title: playlistName, sections: [])
         template.emptyViewTitleVariants = ["Loading..."]
 
-        carplayChannel?.invokeMethod("getPlaylistSongs", arguments: ["id": playlistId]) { [weak self] result in
+        invokeWithRetry("getPlaylistSongs", arguments: ["id": playlistId]) { [weak self] result in
             guard let songs = result as? [[String: Any]] else {
-                template.emptyViewTitleVariants = ["No songs"]
+                template.emptyViewTitleVariants = ["Could not load songs"]
                 return
             }
 
@@ -368,7 +484,9 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
                 let controlSection = CPListSection(items: [playAll, shuffle])
                 let songsSection = CPListSection(items: items, header: "Songs", sectionIndexTitle: nil)
                 template.updateSections([controlSection, songsSection])
-                template.emptyViewTitleVariants = ["No songs"]
+                if items.isEmpty {
+                    template.emptyViewTitleVariants = ["No songs"]
+                }
             }
         }
 
@@ -415,8 +533,13 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
     // MARK: - Image Loading
 
     private func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
-        URLSession.shared.dataTask(with: url) { data, _, _ in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             DispatchQueue.main.async {
+                if let error = error {
+                    print("[CarPlay] Image load failed: \(error.localizedDescription)")
+                    completion(nil)
+                    return
+                }
                 if let data = data, let image = UIImage(data: data) {
                     completion(image)
                 } else {

@@ -2,11 +2,11 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:just_audio/just_audio.dart' as ja;
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/providers/providers.dart';
 import '../../../core/audio/audio.dart';
+import '../../../core/audio/audio_player_service.dart' as svc;
 
 class NowPlayingScreen extends ConsumerWidget {
   const NowPlayingScreen({super.key});
@@ -234,7 +234,17 @@ class NowPlayingScreen extends ConsumerWidget {
                         IconButton(
                           onPressed: () {
                             final handler = ref.read(audioHandlerProvider);
-                            handler.player.setShuffleModeEnabled(!shuffleEnabled);
+                            final newShuffle = !shuffleEnabled;
+                            handler.setShuffle(newShuffle);
+                            ScaffoldMessenger.of(context)
+                              ..clearSnackBars()
+                              ..showSnackBar(SnackBar(
+                                content: Text(
+                                  newShuffle ? 'Shuffle on' : 'Shuffle off',
+                                ),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                              ));
                           },
                           icon: Icon(
                             Icons.shuffle,
@@ -285,16 +295,27 @@ class NowPlayingScreen extends ConsumerWidget {
                         IconButton(
                           onPressed: () {
                             final handler = ref.read(audioHandlerProvider);
+                            String label;
                             // Cycle: off -> all -> one -> off
                             switch (repeatMode) {
                               case AudioServiceRepeatMode.none:
-                                handler.player.setLoopMode(ja.LoopMode.all);
+                                handler.setRepeat(svc.RepeatMode.all);
+                                label = 'Repeat all';
                               case AudioServiceRepeatMode.all:
                               case AudioServiceRepeatMode.group:
-                                handler.player.setLoopMode(ja.LoopMode.one);
+                                handler.setRepeat(svc.RepeatMode.one);
+                                label = 'Repeat one';
                               case AudioServiceRepeatMode.one:
-                                handler.player.setLoopMode(ja.LoopMode.off);
+                                handler.setRepeat(svc.RepeatMode.none);
+                                label = 'Repeat off';
                             }
+                            ScaffoldMessenger.of(context)
+                              ..clearSnackBars()
+                              ..showSnackBar(SnackBar(
+                                content: Text(label),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                              ));
                           },
                           icon: Icon(
                             repeatMode == AudioServiceRepeatMode.one
